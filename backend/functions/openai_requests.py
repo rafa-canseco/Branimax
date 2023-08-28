@@ -87,8 +87,8 @@ def get_chat_response(message_input,name_pdf):
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
             qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompr":custom_prompt})
             # Ejecutar el modelo con el mensaje de entrada
-            message_text = qa.run(message_input)
-            print(message_text)
+            response = qa.run(message_input)
+            print(response)
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
             print(f"Prompt Tokens: {cb.prompt_tokens}")
@@ -96,7 +96,7 @@ def get_chat_response(message_input,name_pdf):
             print(f"Successful Requests: {cb.successful_requests}")
             print(f"Total Cost (USD): ${cb.total_cost}")
             # Devolver el texto del mensaje
-            return message_text
+            return response
     except Exception as e:
         print(e)
         return

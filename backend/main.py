@@ -80,3 +80,13 @@ async def post_audio(file: UploadFile = File(...)):
 
     # Use for Post: Return output audio
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
+
+@app.post("/post-texto")
+async def post_texto(data:dict):
+
+    message_decoded = data["question"]
+    print(message_decoded)
+
+    response = get_chat_response(message_decoded)
+
+    return {"response": response}
