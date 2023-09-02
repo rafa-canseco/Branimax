@@ -9,10 +9,12 @@ from langchain.vectorstores import Chroma
 from langchain import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
+import os
+import json
 
 
 #retrieve our eviroment variables
-openai.organization = config("OPEN_AI_ORG")
+os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 openai.api_key = config("OPEN_AI_KEY")
 
 #open ai -whisper
@@ -21,6 +23,7 @@ def convert_audio_to_text(audio_file):
     try:
         transcript = openai.Audio.transcribe("whisper-1",audio_file)
         message_text = transcript["text"]
+        print(message_text)
         return message_text
     except Exception as e:
         print(e)
@@ -46,17 +49,18 @@ def convert_audio_to_text(audio_file):
 #         print(e)
 #         return
     
-def get_chat_response(message_input,name_pdf):
-    # Recuperar los mensajes recientes
-    messages = get_recent_messages()
-    # Crear un nuevo mensaje de usuario
-    user_messages = {"role":"user","content":message_input}
-    # Agregar el nuevo mensaje a la lista de mensajes
-    messages.append(user_messages)
-    print(messages)
+def get_chat_response(message_input):
 
     try:
+        #aqui relacionamos el prompt al usuario @dev:tenemos que ordernar la base de datos
+        name_pdf = "./storage/Scarlett.csv"
+
         with get_openai_callback() as cb:
+
+            #ESCRIBIR ESTO DIRECTO EN SUPABASE
+            with open('data.json', 'a') as f:
+                json.dump({"usuario": message_input}, f)
+
             # Cargar el documento con los datos del cliente
             loader = CSVLoader(name_pdf)
             documents = loader.load()
@@ -69,7 +73,7 @@ def get_chat_response(message_input,name_pdf):
             db = Chroma.from_documents(texts,embeddings)
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
-            llm = OpenAI(temperature=0.4,model="gpt-3.5-turbo")
+            llm = OpenAI(temperature=0.4)
             # Definir la plantilla del mensaje
             template ="""
                 Eres Luis Miguel, el Sol de México, una de las figuras más icónicas y queridas de la música latina. /
@@ -85,10 +89,13 @@ def get_chat_response(message_input,name_pdf):
             # Incluir el nuevo prompt
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
-            qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompr":custom_prompt})
+            qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":custom_prompt})
             # Ejecutar el modelo con el mensaje de entrada
             response = qa.run(message_input)
             print(response)
+            #ESCRIBIR ESTO DIRECTO EN SUPABASE
+            with open('data.json', 'a') as f:
+                json.dump({"Scarlett": response}, f)
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
             print(f"Prompt Tokens: {cb.prompt_tokens}")
