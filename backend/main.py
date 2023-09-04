@@ -6,6 +6,10 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from decouple import config
 import openai
+import os
+from supabase import create_client
+from dotenv import load_dotenv
+load_dotenv()
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
@@ -32,6 +36,11 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"]
 )
+
+url =os.environ.get("SUPABASE_URL")
+key =os.environ.get("SUPABASE_KEY")
+supabase=create_client(url,key)
+
 
 #Check Health
 @app.get("/health")
