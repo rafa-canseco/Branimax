@@ -11,6 +11,15 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 import os
 import json
+from supabase import create_client
+from dotenv import load_dotenv
+load_dotenv()
+
+
+url =os.environ.get("SUPABASE_URL")
+key =os.environ.get("SUPABASE_KEY")
+supabase=create_client(url,key)
+
 
 
 #retrieve our eviroment variables
@@ -58,8 +67,6 @@ def get_chat_response(message_input):
         with get_openai_callback() as cb:
 
             #ESCRIBIR ESTO DIRECTO EN SUPABASE
-            with open('data.json', 'a') as f:
-                json.dump({"usuario": message_input}, f)
 
             # Cargar el documento con los datos del cliente
             loader = CSVLoader(name_pdf)
@@ -93,9 +100,24 @@ def get_chat_response(message_input):
             # Ejecutar el modelo con el mensaje de entrada
             response = qa.run(message_input)
             print(response)
-            #ESCRIBIR ESTO DIRECTO EN SUPABASE
-            with open('data.json', 'a') as f:
-                json.dump({"Scarlett": response}, f)
+
+            # Obtener el registro actual en el ID 1
+            # Obtenemos el registro actual de la tabla "Conversation" con ID 1
+            current_record = supabase.table("Conversation").select("text").eq("id", 1).execute()
+            # Extraemos el texto existente del registro
+            existing_text = current_record.data[0]['text']
+            print("Texto existente:", existing_text)   
+            # Actualizamos el texto con el mensaje del usuario y la respuesta de Scarlett
+            updated_text = existing_text + "\nUsuario: " + message_input + "\nScarlett: " + response
+            print("Texto actualizado:", updated_text)   
+            # Actualizamos el registro en la base de datos con el nuevo texto
+            update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id", 1).execute()
+            print(update_response)
+            # Verificamos que el registro se haya actualizado correctamente
+            verification_record = supabase.table("Conversation").select("text").eq("id", 1).execute()
+            print("Registro de verificación:", verification_record)
+
+
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
             print(f"Prompt Tokens: {cb.prompt_tokens}")
@@ -107,3 +129,4 @@ def get_chat_response(message_input):
     except Exception as e:
         print(e)
         return
+    

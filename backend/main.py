@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from decouple import config
 import openai
 import os
-from supabase import create_client
-from dotenv import load_dotenv
-load_dotenv()
+# from supabase import create_client
+# from dotenv import load_dotenv
+# load_dotenv()
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
@@ -37,13 +37,13 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-url =os.environ.get("SUPABASE_URL")
-key =os.environ.get("SUPABASE_KEY")
-supabase=create_client(url,key)
-#Testing de Conexión
-data=supabase.table("USUARIOS").update({"nombre":"Orlando"}).eq("id",1).execute()
-data = supabase.table("USUARIOS").select("*").execute()
-print(data)
+# url =os.environ.get("SUPABASE_URL")
+# key =os.environ.get("SUPABASE_KEY")
+# supabase=create_client(url,key)
+# #Testing de Conexión
+# data=supabase.table("USUARIOS").update({"nombre":"Orlando"}).eq("id",1).execute()
+# data = supabase.table("USUARIOS").select("*").execute()
+# print(data)
 
 
 #Check Health
