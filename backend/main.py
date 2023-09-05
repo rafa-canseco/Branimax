@@ -6,6 +6,10 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from decouple import config
 import openai
+import os
+from supabase import create_client
+from dotenv import load_dotenv
+load_dotenv()
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
@@ -33,6 +37,14 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+url =os.environ.get("SUPABASE_URL")
+key =os.environ.get("SUPABASE_KEY")
+supabase=create_client(url,key)
+data=supabase.table("USUARIOS").update({"nombre":"Orlando"}).eq("id",1).execute()
+data = supabase.table("USUARIOS").select("*").execute()
+print(data)
+
+
 #Check Health
 @app.get("/health")
 async def checkHealth():
@@ -57,10 +69,7 @@ async def post_audio(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Failed to decode audio")
 
     # Get chat response
-    chat_response = get_chat_response(message_decoded)
-
-    # Store messages
-    store_messages(message_decoded, chat_response)
+    chat_response = get_chat_response(message_decoded)    
 
     # Guard: Ensure output
     if not chat_response:
@@ -86,7 +95,7 @@ async def post_texto(data:dict):
 
     message_decoded = data["question"]
     print(message_decoded)
-
+    #aqui hacer la petición a la base de datos dependiendo del id que mande del usuario
     response = get_chat_response(message_decoded)
 
     return {"response": response}
