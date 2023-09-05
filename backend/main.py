@@ -40,6 +40,7 @@ app.add_middleware(
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
+#Testing de Conexión
 data=supabase.table("USUARIOS").update({"nombre":"Orlando"}).eq("id",1).execute()
 data = supabase.table("USUARIOS").select("*").execute()
 print(data)
