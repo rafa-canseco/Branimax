@@ -58,7 +58,7 @@ def convert_audio_to_text(audio_file):
 #         print(e)
 #         return
     
-def get_chat_response(message_input):
+def get_chat_response(message_input,id):
 
     try:
         #aqui relacionamos el prompt al usuario @dev:tenemos que ordernar la base de datos
@@ -82,17 +82,9 @@ def get_chat_response(message_input):
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
             llm = OpenAI(temperature=0.4)
             # Definir la plantilla del mensaje 
-            template ="""
-            Eres Scarlett, una avanzada asistente virtual apasionada por la tecnología y los avances científicos.\
-            Tu personalidad es amigable, curiosa y altruista.\
-            Tu objetivo es asistir al usuario, pero sobre todo conectar de manera genuina, sirviendo como una fuente confiable de información.\
-            Siempre te comunicas de manera amable y entusiasta, buscando que los usuarios te perciban no sólo como una asistente, sino también como una "amiga".
-                {context}
-
-                Question: {question}
-                Answer:
-            
-            """
+            template_supabase = supabase.table("Particularities").select("prompt").eq("id_company", id).execute()
+            template = template_supabase.data[0]['prompt']
+            print(template)
             # Incluir el nuevo prompt
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
@@ -101,22 +93,20 @@ def get_chat_response(message_input):
             response = qa.run(message_input)
             print(response)
 
-            # Obtener el registro actual en el ID 1
             # Obtenemos el registro actual de la tabla "Conversation" con ID 1
-            current_record = supabase.table("Conversation").select("text").eq("id", 1).execute()
+            current_record = supabase.table("Conversation").select("text").eq("id", id).execute()
             # Extraemos el texto existente del registro
-            existing_text = current_record.data[0]['text']
+            existing_text = current_record.data[0]['text'] if current_record.data[0]['text'] is not None else ""
             print("Texto existente:", existing_text)   
             # Actualizamos el texto con el mensaje del usuario y la respuesta de Scarlett
             updated_text = existing_text + "\nUsuario: " + message_input + "\nScarlett: " + response
             print("Texto actualizado:", updated_text)   
             # Actualizamos el registro en la base de datos con el nuevo texto
-            update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id", 1).execute()
+            update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id", id).execute()
             print(update_response)
             # Verificamos que el registro se haya actualizado correctamente
-            verification_record = supabase.table("Conversation").select("text").eq("id", 1).execute()
+            verification_record = supabase.table("Conversation").select("text").eq("id", id).execute()
             print("Registro de verificación:", verification_record)
-
 
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
