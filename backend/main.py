@@ -1,19 +1,12 @@
 #uvicorn main:app
-#comentario x
+
 #Main Imports
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from decouple import config
-import openai
-import os
-from supabase import create_client
-from dotenv import load_dotenv
-load_dotenv()
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
-from functions.database import store_messages
 from functions.text_to_speech import convert_text_to_speech
 
 #Initiate App
@@ -37,9 +30,6 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-url =os.environ.get("SUPABASE_URL")
-key =os.environ.get("SUPABASE_KEY")
-supabase=create_client(url,key)
 
 
 
