@@ -8,7 +8,7 @@ from langchain.vectorstores import Chroma
 from langchain import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
-from functions.querys_db import getPromtByCompany,getConversationSaved
+from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext
 import os
 
 #retrieve our eviroment variables
@@ -32,12 +32,12 @@ def get_chat_response(message_input,id):
 
     try:
         #aqui relacionamos el prompt al usuario 
-        name_pdf = "./storage/Scarlett.csv"
+        csv = getUrlCsvForContext(id)
 
         with get_openai_callback() as cb:
 
             # Cargar el documento con los datos del cliente
-            loader = CSVLoader(name_pdf)
+            loader = CSVLoader(csv)
             documents = loader.load()
             # Dividir el documento en fragmentos
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
