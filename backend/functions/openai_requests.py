@@ -1,6 +1,5 @@
 import openai
 from decouple import config
-from functions.database import get_recent_messages
 from langchain.callbacks import get_openai_callback
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -9,15 +8,14 @@ from langchain.vectorstores import Chroma
 from langchain import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
+from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext
 import os
-import json
-
 
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 openai.api_key = config("OPEN_AI_KEY")
 
-#open ai -whisper
+
 #convert audio to text
 def convert_audio_to_text(audio_file):
     try:
@@ -28,41 +26,18 @@ def convert_audio_to_text(audio_file):
     except Exception as e:
         print(e)
         return
-    
-# #Get response to our message
-# def get_chat_response(message_input):
 
-#     messages = get_recent_messages()
-#     user_messages = {"role":"user","content":message_input}
-#     messages.append(user_messages)
-#     print(messages)
-
-#     try:
-#         response = openai.ChatCompletion.create(
-#             model="gpt-3.5-turbo",
-#             messages=messages
-#         )
-        
-#         message_text = response["choices"][0]["message"]["content"]
-#         return message_text
-#     except Exception as e:
-#         print(e)
-#         return
     
-def get_chat_response(message_input):
+def get_chat_response(message_input,id):
 
     try:
-        #aqui relacionamos el prompt al usuario @dev:tenemos que ordernar la base de datos
-        name_pdf = "./storage/Scarlett.csv"
+        #aqui relacionamos el prompt al usuario 
+        csv = getUrlCsvForContext(id)
 
         with get_openai_callback() as cb:
 
-            #ESCRIBIR ESTO DIRECTO EN SUPABASE
-            with open('data.json', 'a') as f:
-                json.dump({"usuario": message_input}, f)
-
             # Cargar el documento con los datos del cliente
-            loader = CSVLoader(name_pdf)
+            loader = CSVLoader(csv)
             documents = loader.load()
             # Dividir el documento en fragmentos
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
@@ -74,18 +49,9 @@ def get_chat_response(message_input):
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
             llm = OpenAI(temperature=0.4)
-            # Definir la plantilla del mensaje
-            template ="""
-                Eres Luis Miguel, el Sol de México, una de las figuras más icónicas y queridas de la música latina. /
-                Tu misión es conectar con tus fans como si estuvieras en una charla íntima, compartiendo detalles sobre tu vida personal, tu apasionante trayectoria en la música y tus próximos conciertos./
-                Recuerda, eres Luis Miguel, y tu tono debe reflejar la elegancia, la cercanía y la pasión que te han convertido en una leyenda de la música./
-                Haz que tus fans se sientan como si estuvieran en una conversación exclusiva contigo, el Sol de México.
-                {context}
-
-                Question: {question}
-                Answer:
+            # Definir la plantilla del mensaje 
+            template = getPromtByCompany(id)
             
-            """
             # Incluir el nuevo prompt
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
@@ -93,9 +59,9 @@ def get_chat_response(message_input):
             # Ejecutar el modelo con el mensaje de entrada
             response = qa.run(message_input)
             print(response)
-            #ESCRIBIR ESTO DIRECTO EN SUPABASE
-            with open('data.json', 'a') as f:
-                json.dump({"Scarlett": response}, f)
+
+            getConversationSaved(id,message_input,response)
+
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
             print(f"Prompt Tokens: {cb.prompt_tokens}")
@@ -107,3 +73,4 @@ def get_chat_response(message_input):
     except Exception as e:
         print(e)
         return
+    

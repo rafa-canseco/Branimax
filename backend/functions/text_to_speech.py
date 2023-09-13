@@ -1,32 +1,37 @@
 import requests
 from decouple import config
-import json
+from functions.querys_db import getVoice,getStability,getSimilarity,getStyle
 
 ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 
-#ELEVEN LABS
-#CONVERT TEXT TO SPEECH
-def convert_text_to_speech(message):
 
+#CONVERT TEXT TO SPEECH
+def convert_text_to_speech(message,id):
+
+    stability = getStability(id)
+    similarity = getSimilarity(id)
+    style = getStyle(id)
     #Define Data
     body = {
         "text": message,
-        "model_id": "eleven_multilingual_v1",
+        "model_id": "eleven_multilingual_v2",
+        "languages": [
+        {
+        "language_id": "es",
+        "name": "Spanish"
+        }],
         "voice_settings": {
-            "stability": 0,
-            "similarity_boost":0,
+            "stability": stability,
+            "similarity_boost": similarity,
+            "style": style,
         }
     }
 
-    #Define voice
-    voice_rachel = "21m00Tcm4TlvDq8ikWAM"
-    voice_antoni = "oUciFfPUJCaDqHitPLu5"
-
-
+    voz = getVoice(id)
 
     #Constructing Headers and Endpoint
     headers = {"xi-api-key": ELEVEN_LABS_API_KEY, "Content-Type": "application/json","accept": "audio/mpeg"}
-    endpoint = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_rachel}"
+    endpoint = f"https://api.elevenlabs.io/v1/text-to-speech/{voz}"
 
     # Send request
     try:
@@ -38,4 +43,6 @@ def convert_text_to_speech(message):
     if response.status_code == 200:
         return response.content
     else:
+        # Agregamos un print para ver la descripción del error
+        print(f"Error: {response.status_code}, Descripción: {response.text}")
         return

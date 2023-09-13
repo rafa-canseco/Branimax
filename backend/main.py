@@ -1,27 +1,19 @@
 #uvicorn main:app
-#comentario x
+
 #Main Imports
-from fastapi import FastAPI,File,UploadFile,HTTPException
+from fastapi import FastAPI,File,UploadFile,HTTPException,Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from decouple import config
-import openai
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
-from functions.database import store_messages
 from functions.text_to_speech import convert_text_to_speech
 
 #Initiate App
 app = FastAPI()
 
 #CORS - Origins
-origins = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:4173",
-    "http://localhost:3000",
-]
+origins = ["*"]
 
 #CORS - Middleware
 app.add_middleware(
@@ -33,57 +25,62 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+
 #Check Health
 @app.get("/health")
 async def checkHealth():
     return {"message": "Healthy"}
 
 # Post bot response
-# Note: Not playing back in browser when using post request.
+
+
 @app.post("/post-audio")
-async def post_audio(file: UploadFile = File(...)):
+async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
 
     # Convert audio to text - production
     # Save the file temporarily
+    print("id identificado:",id)
     with open(file.filename, "wb") as buffer:
-        buffer.write(file.file.read())
+        buffer.write(await file.read())
     audio_input = open(file.filename, "rb")
 
     # Decode audio
     message_decoded = convert_audio_to_text(audio_input)
 
-    # Guard: Ensure output
+    # Guardia: Asegurar salida
     if not message_decoded:
-        raise HTTPException(status_code=400, detail="Failed to decode audio")
+        raise HTTPException(status_code=400, detail="Falló al decodificar audio")
 
-    # Get chat response
-    chat_response = get_chat_response(message_decoded)    
+    # Obtener respuesta del chat
+    chat_response = get_chat_response(message_decoded, id)    
 
-    # Guard: Ensure output
+    # Guardia: Asegurar salida
     if not chat_response:
-        raise HTTPException(status_code=400, detail="Failed chat response")
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
     print(chat_response)
     
-    # Convert chat response to audio
-    audio_output = convert_text_to_speech(chat_response)
+    # Convertir respuesta del chat a audio
+    audio_output = convert_text_to_speech(chat_response,id)
 
-    # Guard: Ensure output
+    # Guardia: Asegurar salida
     if not audio_output:
-        raise HTTPException(status_code=400, detail="Failed audio output")
+        raise HTTPException(status_code=400, detail="Falló la salida de audio")
 
-    # Create a generator that yields chunks of data
+    # Crear un generador que produce fragmentos de datos
     def iterfile():
         yield audio_output
 
-    # Use for Post: Return output audio
+    # Usar para Post: Devolver audio de salida
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
 @app.post("/post-texto")
 async def post_texto(data:dict):
 
     message_decoded = data["question"]
+    id = data["id"]
     print(message_decoded)
+    print("id identificado:",id)
     #aqui hacer la petición a la base de datos dependiendo del id que mande del usuario
-    response = get_chat_response(message_decoded)
+    response = get_chat_response(message_decoded,id)
 
     return {"response": response}
