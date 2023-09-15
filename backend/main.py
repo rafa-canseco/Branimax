@@ -4,6 +4,9 @@
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from supabase import create_client
+from dotenv import load_dotenv
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
@@ -25,6 +28,11 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+load_dotenv()
+
+url =os.environ.get("SUPABASE_URL")
+key =os.environ.get("SUPABASE_KEY")
+supabase=create_client(url,key)
 
 #Check Health
 @app.get("/health")
@@ -59,7 +67,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
     print(chat_response)
     
-    # Convertir respuesta del chat a audio
+    # Convertir rßespuesta del chat a audio
     audio_output = convert_text_to_speech(chat_response,id)
 
     # Guardia: Asegurar salida
@@ -84,3 +92,29 @@ async def post_texto(data:dict):
     response = get_chat_response(message_decoded,id)
 
     return {"response": response}
+
+@app.post("/signup")
+async def signup(data:dict):
+    response = supabase.auth.sign_up(data)
+    print(response)
+    return response
+
+@app.post("/login")
+async def login(data:dict):
+    session = supabase.auth.sign_in_with_password(data)
+    print(session)
+    
+ 
+
+@app.post("/forgot-password")
+async def forgot_password(data:dict):
+    email=data["email"]
+    response = supabase.auth.reset_password_email(email)
+    print(response)
+    return
+
+@app.post("/sign-out")
+async def forgot_password():
+    supabase.auth.sign_out()
+    print("sesion finalizada")
+    return
