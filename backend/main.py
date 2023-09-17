@@ -4,6 +4,7 @@
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from gotrue.errors import AuthApiError
 import os
 from supabase import create_client
 from dotenv import load_dotenv
@@ -94,17 +95,39 @@ async def post_texto(data:dict):
     return {"response": response}
 
 @app.post("/signup")
-async def signup(data:dict):
-    response = supabase.auth.sign_up(data)
-    print(response)
+async def signup(data: dict):
+    email = data.get("email")
+    id_company = data.get("id_company")
+    
+    if not email or not id_company:
+        raise HTTPException(status_code=400, detail="Email or company ID missing.")
+
+    try:
+        response = supabase.auth.sign_up(data)
+    except AuthApiError as error:
+        print("Error during registration:", str(error))
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+    try:
+        supabase.table("Users").insert({"Email": email, "id_company": id_company}).execute()
+    except Exception as e:
+        print("Error inserting user:", str(e))
+        raise HTTPException(status_code=500, detail="Failed to insert user into database.")
+    
     return response
 
+        
+    
 @app.post("/login")
 async def login(data:dict):
     session = supabase.auth.sign_in_with_password(data)
     print(session)
-    
- 
+    access_token = session.session.access_token
+    print(access_token)
+    supabase.auth.sign_out()
+    return access_token
+
 
 @app.post("/forgot-password")
 async def forgot_password(data:dict):
@@ -113,8 +136,14 @@ async def forgot_password(data:dict):
     print(response)
     return
 
-@app.post("/sign-out")
+@app.post("/logout")
 async def forgot_password():
     supabase.auth.sign_out()
     print("sesion finalizada")
     return
+
+@app.post("/get-company")
+async def get_company():
+    data = supabase.table("Companys").select("*").execute()
+    print(data)
+    return data
