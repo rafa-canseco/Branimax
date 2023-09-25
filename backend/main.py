@@ -4,6 +4,10 @@
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from gotrue.errors import AuthApiError
+import os
+from supabase import create_client
+from dotenv import load_dotenv
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
@@ -25,6 +29,11 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
+load_dotenv()
+
+url =os.environ.get("SUPABASE_URL")
+key =os.environ.get("SUPABASE_KEY")
+supabase=create_client(url,key)
 
 #Check Health
 @app.get("/health")
@@ -59,7 +68,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
     print(chat_response)
     
-    # Convertir respuesta del chat a audio
+    # Convertir rßespuesta del chat a audio
     audio_output = convert_text_to_speech(chat_response,id)
 
     # Guardia: Asegurar salida
@@ -84,3 +93,57 @@ async def post_texto(data:dict):
     response = get_chat_response(message_decoded,id)
 
     return {"response": response}
+
+@app.post("/signup")
+async def signup(data: dict):
+    email = data.get("email")
+    id_company = data.get("id_company")
+    
+    if not email or not id_company:
+        raise HTTPException(status_code=400, detail="Email or company ID missing.")
+
+    try:
+        response = supabase.auth.sign_up(data)
+    except AuthApiError as error:
+        print("Error during registration:", str(error))
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+    try:
+        supabase.table("Users").insert({"Email": email, "id_company": id_company}).execute()
+    except Exception as e:
+        print("Error inserting user:", str(e))
+        raise HTTPException(status_code=500, detail="Failed to insert user into database.")
+    
+    return response
+
+        
+    
+@app.post("/login")
+async def login(data:dict):
+    session = supabase.auth.sign_in_with_password(data)
+    print(session)
+    access_token = session.session.access_token
+    print(access_token)
+    supabase.auth.sign_out()
+    return access_token
+
+
+@app.post("/forgot-password")
+async def forgot_password(data:dict):
+    email=data["email"]
+    response = supabase.auth.reset_password_email(email)
+    print(response)
+    return
+
+@app.post("/logout")
+async def forgot_password():
+    supabase.auth.sign_out()
+    print("sesion finalizada")
+    return
+
+@app.post("/get-company")
+async def get_company():
+    data = supabase.table("Companys").select("*").execute()
+    print(data)
+    return data
