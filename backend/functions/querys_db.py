@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 import os
 import requests
 load_dotenv()
+import json
 
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
@@ -43,18 +44,25 @@ def getCompanyName(id):
     companyName = supabase.table("Companys").select("name").eq("id", id).execute().data[0]['name']
     return companyName
 
-def getConversationSaved(id,message_input,response):
-    current_record = supabase.table("Conversation").select("text").eq("id", id).execute()
-    existing_text = current_record.data[0]['text'] if current_record.data[0]['text'] is not None else ""
-    print("Texto existente:", existing_text)   
-    # Actualizamos el texto con el mensaje del usuario y la respuesta de Scarlett
-    updated_text = existing_text + "\nUsuario: " + message_input + "\nScarlett: " + response
-    print("Texto actualizado:", updated_text)   
-    # Actualizamos el registro en la base de datos con el nuevo texto
-    update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id", id).execute()
-    print(update_response)
+def getConversationSaved(id, message_input, response):
+    current_record = supabase.table("Conversation").select("text").eq("id_user", id).execute()
+    # Si no hay una conversación existente, iniciamos una en la base de datos
+    if not current_record.data:
+        # Creamos el texto actualizado con el mensaje del usuario y la respuesta de Scarlett
+        updated_text = "\nUsuario: " + message_input + "\nScarlett: " + response
+        new_conversation = supabase.table("Conversation").insert({"text": updated_text, "id_user": id}).execute()
+        print("Nueva conversación iniciada:", new_conversation)
+    else:
+        existing_text = current_record.data[0]['text'] if current_record.data[0]['text'] is not None else ""
+        print("Texto existente:", existing_text)   
+        # Actualizamos el texto con el mensaje del usuario y la respuesta de Scarlett
+        updated_text = existing_text + "\nUsuario: " + message_input + "\nScarlett: " + response
+        print("Texto actualizado:", updated_text)   
+        # Actualizamos el registro en la base de datos con el nuevo texto
+        update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id_user", id).execute()
+        print(update_response)
     # Verificamos que el registro se haya actualizado correctamente
-    verification_record = supabase.table("Conversation").select("text").eq("id", id).execute()
+    verification_record = supabase.table("Conversation").select("text").eq("id_user", id).execute()
     print("Registro de verificación:", verification_record)
 
 def getVoice(id):
@@ -80,3 +88,30 @@ def getStyle(id):
     style = style_supabase.data[0]['voice_style']
     print(style)
     return style
+
+def getCompanyConversation(company_name):
+    company_id = supabase.table("Companys").select("id").eq("name", company_name).execute().data[0]['id']
+    print(company_id)
+    users = supabase.table("Users").select("id").eq("id_company", company_id).execute()
+    users_id = [user['id'] for user in users.data]
+    print(users_id)
+    
+    conversations_data = []
+    conversation_counter = 0
+    
+    for uid in users_id:
+        conversations = supabase.table("Conversation").select("text").eq("id_user", uid).execute()
+        for conversation in conversations.data:
+            conversation_counter += 1
+            conversations_data.append({
+                "user_id": uid,
+                "conversation_number": conversation_counter,
+                "text": conversation['text']
+            })
+    
+    json_output = json.dumps({"conversations": conversations_data}, indent=4)
+    print(json_output)
+    
+    return json_output
+
+

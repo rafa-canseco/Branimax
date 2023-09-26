@@ -147,3 +147,4 @@ async def get_company():
     data = supabase.table("Companys").select("*").execute()
     print(data)
     return data
+
