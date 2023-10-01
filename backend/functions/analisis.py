@@ -2,7 +2,7 @@ from supabase import create_client
 from dotenv import load_dotenv
 import os
 import requests
-from querys_db import getCompanyConversation
+from functions.querys_db import getCompanyConversation
 from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain

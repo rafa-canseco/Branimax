@@ -1,6 +1,8 @@
 import requests
 from decouple import config
 from functions.querys_db import getVoice,getStability,getSimilarity,getStyle
+from pydub import AudioSegment
+import io
 
 ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 
@@ -41,8 +43,23 @@ def convert_text_to_speech(message,id):
     
     #Handle Response 
     if response.status_code == 200:
-        return response.content
+        mp3_data = response.content
+        wav_data = convert_mp3_to_wav(mp3_data)
+        return wav_data
     else:
         # Agregamos un print para ver la descripción del error
         print(f"Error: {response.status_code}, Descripción: {response.text}")
         return
+    
+
+
+def convert_mp3_to_wav(mp3_data):
+    # Load mp3 data
+    audio = AudioSegment.from_mp3(io.BytesIO(mp3_data))
+    
+    # Convert to wav
+    wav_data = io.BytesIO()
+    audio.export(wav_data, format="wav")
+    wav_data.seek(0)
+    print("exito convirtiendo audio")
+    return wav_data.read()

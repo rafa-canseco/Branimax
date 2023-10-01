@@ -76,6 +76,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
     if not audio_output:
         raise HTTPException(status_code=400, detail="Falló la salida de audio")
 
+    print("audio convertido a wav")
     # Crear un generador que produce fragmentos de datos
     def iterfile():
         yield audio_output
