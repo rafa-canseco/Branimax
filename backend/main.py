@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
 from functions.text_to_speech import convert_text_to_speech
+from functions.analisis import found_topics,scheme_topics,generate_question
 
 #Initiate App
 app = FastAPI()
@@ -75,6 +76,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
     if not audio_output:
         raise HTTPException(status_code=400, detail="Falló la salida de audio")
 
+    print("audio convertido a wav")
     # Crear un generador que produce fragmentos de datos
     def iterfile():
         yield audio_output
@@ -147,4 +149,21 @@ async def get_company():
     data = supabase.table("Companys").select("*").execute()
     print(data)
     return data
+
+@app.post("/get-resume")
+async def generate_resume(data:dict):
+    company_name = data["company_name"]
+    topics = found_topics(company_name)
+    schema = scheme_topics(company_name)
+    print(topics)
+    print(schema)
+    return topics,schema
+
+@app.post("/ask_question")
+async def generate_ask(data:dict):
+    company_name = data["company_name"]
+    question = data["question"]
+    response = generate_question(company_name,question)
+    print(response)
+    return response
 
