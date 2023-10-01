@@ -91,10 +91,8 @@ def getStyle(id):
 
 def getCompanyConversation(company_name):
     company_id = supabase.table("Companys").select("id").eq("name", company_name).execute().data[0]['id']
-    print(company_id)
     users = supabase.table("Users").select("id").eq("id_company", company_id).execute()
     users_id = [user['id'] for user in users.data]
-    print(users_id)
     
     conversations_data = []
     conversation_counter = 0
