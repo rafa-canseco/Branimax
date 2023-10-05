@@ -2,11 +2,13 @@
 
 #Main Imports
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse,JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from gotrue.errors import AuthApiError
 import os
 from supabase import create_client
+
+
 from dotenv import load_dotenv
 
 #Custom Function Imports
@@ -119,22 +121,37 @@ async def signup(data: dict):
     
     return response
 
-        
-    
 @app.post("/login")
 async def login(data:dict):
     session = supabase.auth.sign_in_with_password(data)
     print(session)
     access_token = session.session.access_token
     print(access_token)
-    supabase.auth.sign_out()
     return access_token
 
+
+@app.post("/login_empresas")
+async def login(data: dict):
+    try:
+        # Intenta iniciar sesión con Supabase
+        session = supabase.auth.sign_in_with_password(data)
+        # Recupera el token de acceso desde la respuesta
+        access_token = session.session.access_token
+        print(access_token)
+        # Retorna el token de acceso y el estado de autenticación
+        return JSONResponse(content={'isAuthenticated': True, 'token': access_token})
+
+    except Exception as e:
+        # Imprime el error y retorna una respuesta con el estado de error
+        print("Razón del error:", str(e))
+        return JSONResponse(status_code=400, content={'isAuthenticated': False, 'error': str(e)})
 
 @app.post("/forgot-password")
 async def forgot_password(data:dict):
     email=data["email"]
-    response = supabase.auth.reset_password_email(email)
+    options = {
+    'redirect_to': 'https://branimax-analisis-front.vercel.app/change-password'}
+    response = supabase.auth.reset_password_email(email,options=options)
     print(response)
     return
 
@@ -167,3 +184,57 @@ async def generate_ask(data:dict):
     print(response)
     return response
 
+@app.post("/sign-out")
+async def sign_out():
+    supabase.auth.sign_out()
+    print("sign out")
+
+from typing import Optional
+
+@app.post("/change-password")
+async def change_password(data: dict):
+    password = data["password"]
+    access_token = data["access_token"]
+    refresh_token =data["refresh_token"]
+
+    attributes = {
+        "password": password
+    }
+    
+    try:
+        data = supabase.auth.set_session(access_token,refresh_token)
+        response = supabase.auth.update_user(attributes)
+        print(response)
+        
+        if response.error:
+            print("Error:", response.error)
+            return {"error": str(response.error)}
+        
+        return response.data  # o simplemente `return response`
+    except Exception as e:
+        print(f"Error general: {str(e)}")
+        return {"error": f"Error general: {str(e)}"}
+
+@app.post("/sign-up-empresas")
+async def signup(data: dict):
+    email = data.get("email")
+    
+    id_company = data.get("id_company")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email or company ID missing.")
+
+    try:
+        response = supabase.auth.sign_up(data)
+    except AuthApiError as error:
+        print("Error during registration:", str(error))
+        raise HTTPException(status_code=400, detail=str(error))
+
+
+    try:
+        supabase.table("Users").insert({"Email": email, "id_company": id_company}).execute()
+    except Exception as e:
+        print("Error inserting user:", str(e))
+        raise HTTPException(status_code=500, detail="Failed to insert user into database.")
+    
+    return response
