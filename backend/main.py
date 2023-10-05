@@ -150,7 +150,7 @@ async def login(data: dict):
 async def forgot_password(data:dict):
     email=data["email"]
     options = {
-    'redirect_to': 'http://localhost:5173/change-password'}
+    'redirect_to': 'https://branimax-analisis-front.vercel.app/change-password'}
     response = supabase.auth.reset_password_email(email,options=options)
     print(response)
     return
