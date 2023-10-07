@@ -108,8 +108,29 @@ def getCompanyConversation(company_name):
             })
     
     json_output = json.dumps({"conversations": conversations_data}, indent=4)
-    print(json_output)
+    print("conversaciones terminadas correctamente")
     
     return json_output
+
+
+def get_total_users(company_name):
+    company_id = supabase.table("Companys").select("id").eq("name", company_name).execute().data[0]['id']
+    users = supabase.table("Users").select("id").eq("id_company", company_id).execute()
+    print(users)
+    total_users = len(users.data)
+    print(total_users)
+    return total_users
+
+def get_info_users_global(company_name):
+    company_name = supabase.table("Companys").select("id").eq("name", company_name).execute().data[0]['id']
+    users = supabase.table("Users").select("*").eq("id_company", company_name).execute()
+    print(users)
+    return users
+
+def conversation_by_user(id_user):
+    conversation =supabase.table("Conversation").select("text").eq("id_user", id_user).execute().data[0]['text']
+    print(conversation)
+    return conversation
+
 
 

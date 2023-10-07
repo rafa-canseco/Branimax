@@ -2,7 +2,7 @@ from supabase import create_client
 from dotenv import load_dotenv
 import os
 import requests
-from functions.querys_db import getCompanyConversation
+from functions.querys_db import getCompanyConversation,get_total_users,get_info_users_global
 from langchain.chat_models import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain
@@ -22,6 +22,7 @@ import time
 import os
 from dotenv import load_dotenv
 from decouple import config
+import time
 load_dotenv()
 
 url =os.environ.get("SUPABASE_URL")
@@ -33,37 +34,55 @@ openai.api_key = config("OPEN_AI_KEY")
 llm3= ChatOpenAI(temperature=0,
                          openai_api_key= os.getenv("OPEN_AI_KEY"),
                          model_name="gpt-3.5-turbo",
-                         request_timeout=180
+                         request_timeout=220
                          )
 
 def generate_docs(conversaciones):
     with get_openai_callback() as cb:
+        inicio = time.time()
         text_splitter = RecursiveCharacterTextSplitter(separators=["\n\n", "\n", " "], chunk_size=10000, chunk_overlap=2200)
         metadatas = [{"some_key": "some_value"}]  # Asegúrate de generar metadatas significativos
 
         docs = text_splitter.create_documents([conversaciones],metadatas)
-        print(docs)
+        print("documentos terminados correctamente")
         print (f"You have {len(docs)} docs. First doc is {llm3.get_num_tokens(docs[0].page_content)} tokens")
         print(f"Total Tokens: {cb.total_tokens}")
         print(f"Prompt Tokens: {cb.prompt_tokens}")
         print(f"Completion Tokens: {cb.completion_tokens}")
         print(f"Successful Requests: {cb.successful_requests}")
         print(f"Total Cost (USD): ${cb.total_cost}")
+        fin = time.time()
+        tiempo_transcurrido = fin - inicio
+        print(f"generate docs lasted: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+        return docs
+    
+def split_docs(conversaciones):
+    with get_openai_callback() as cb:
+        inicio = time.time()
+        print("inicio")
+        text_splitter = RecursiveCharacterTextSplitter( chunk_size=2000, chunk_overlap=0)
+        docs = text_splitter.split_text(conversaciones)
+        print("documentos terminados correctamente")
+        print (f"You have {len(docs)} docs. First doc is tokens")
+        print(f"Total Tokens: {cb.total_tokens}")
+        print(f"Prompt Tokens: {cb.prompt_tokens}")
+        print(f"Completion Tokens: {cb.completion_tokens}")
+        print(f"Successful Requests: {cb.successful_requests}")
+        print(f"Total Cost (USD): ${cb.total_cost}")
+        fin = time.time()
+        tiempo_transcurrido = fin - inicio
+        print(f"generate docs lasted: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
         return docs
 
 def found_topics(company_name):
     with get_openai_callback() as cb:
 
-        llm3= ChatOpenAI(temperature=0,
-                            openai_api_key= os.getenv("OPEN_AI_KEY"),
-                            model_name="gpt-3.5-turbo",
-                            request_timeout=180
-                            )
         llm4=ChatOpenAI(temperature=0,
                             openai_api_key= os.getenv("OPEN_AI_KEY"),
                             model_name="gpt-4",
-                            request_timeout=180
+                            request_timeout=220
                             )
+        inicio = time.time()
         conversaciones_json = getCompanyConversation(company_name)
         docs = generate_docs(conversaciones_json)
         template = """
@@ -77,6 +96,7 @@ def found_topics(company_name):
         - Extrae temas solo del transcript proporcionado, evita usar ejemplos.
         - Los títulos de los temas deben ser descriptivos pero concisos. Ejemplo: 'Shaan's Interesting Projects At Twitch' en lugar de 'Shaan's Experience at Twitch'.
         - Un tema debe ser sustancial, no un comentario aislado.
+        - Entrega tu respuesta final en español.
         EJEMPLO DE LA CONVERSACIÓN A RECIBIR:
         Recibirás un JSON con el siguiente formato:
         "user_id": 1,
@@ -120,8 +140,9 @@ def found_topics(company_name):
                                     chain_type="map_reduce",
                                     map_prompt=chat_prompt_map,
                                     combine_prompt=chat_prompt_combine,
-                                    verbose=True
+                                    verbose=False
                                     )
+        print("iniciando cadena")
         topics_found = chain.run({"input_documents":docs})
         print("----------")
         print("Topics found:")
@@ -131,10 +152,14 @@ def found_topics(company_name):
         print(f"Completion Tokens: {cb.completion_tokens}")
         print(f"Successful Requests: {cb.successful_requests}")
         print(f"Total Cost (USD): ${cb.total_cost}")
+        fin=time.time()
+        tiempo_transcurrido = fin - inicio
+        print(f"found topics lasted: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
         return topics_found
 
 def scheme_topics(topics):
     with get_openai_callback() as cb:
+        inicio =time.time()
         schema = {
         "properties": {
             # The title of the topic
@@ -164,13 +189,18 @@ def scheme_topics(topics):
         print(f"Completion Tokens: {cb.completion_tokens}")
         print(f"Successful Requests: {cb.successful_requests}")
         print(f"Total Cost (USD): ${cb.total_cost}")
+        fin= time.time()
+        tiempo_transcurrido = fin - inicio
+        print(f"found schema lasted: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+
 
 def generate_question(company_name,question):
     with get_openai_callback() as cb:
+        inicio = time.time()
         conversation = getCompanyConversation(company_name)
-        docs = generate_docs(conversation)
+        docs = split_docs(conversation)
         embeddings = OpenAIEmbeddings()
-        db=Chroma.from_documents(docs,embeddings)
+        db=Chroma.from_texts(docs,embeddings)
         retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":1})
         qa = RetrievalQA.from_chain_type(llm=OpenAI(temperature=0),chain_type="stuff",retriever=retriever,return_source_documents=True)
         query = question
@@ -181,12 +211,16 @@ def generate_question(company_name,question):
         print(f"Completion Tokens: {cb.completion_tokens}")
         print(f"Successful Requests: {cb.successful_requests}")
         print(f"Total Cost (USD): ${cb.total_cost}")
+        fin = time.time()
+        tiempo_transcurrido = fin - inicio
+        print(f"question resolved lasted: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+        return result
 
+def get_resume_users(company_name):
+    total_usuarios = get_total_users(company_name)
+    return total_usuarios
 
-def generate_resume(company_name):
-    topics =found_topics(company_name)
-    tags = scheme_topics(topics)
-    return topics,tags
-
-
+def get_info_users(company_name):
+    users = get_info_users_global(company_name)
+    return users
 
