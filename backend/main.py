@@ -14,7 +14,8 @@ from dotenv import load_dotenv
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
 from functions.text_to_speech import convert_text_to_speech
-from functions.analisis import found_topics,scheme_topics,generate_question
+from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
+from functions.querys_db import conversation_by_user
 
 #Initiate App
 app = FastAPI()
@@ -171,10 +172,8 @@ async def get_company():
 async def generate_resume(data:dict):
     company_name = data["company_name"]
     topics = found_topics(company_name)
-    schema = scheme_topics(company_name)
     print(topics)
-    print(schema)
-    return topics,schema
+    return {"response": topics}
 
 @app.post("/ask_question")
 async def generate_ask(data:dict):
@@ -182,7 +181,7 @@ async def generate_ask(data:dict):
     question = data["question"]
     response = generate_question(company_name,question)
     print(response)
-    return response
+    return {"response": response}
 
 @app.post("/sign-out")
 async def sign_out():
@@ -238,3 +237,24 @@ async def signup(data: dict):
         raise HTTPException(status_code=500, detail="Failed to insert user into database.")
     
     return response
+
+@app.post("/get-users-resume")
+async def get_users_resume(data:dict):
+    company_name = data["company_name"]
+    total_users = get_resume_users(company_name)
+    return {"response": total_users}
+
+
+@app.post("/get-users-info")
+async def user_info(data:dict):
+    company_name = data["company_name"]
+    users = get_info_users(company_name)
+    return {"response": users}
+
+
+@app.post("/get-users-conversation")
+async def user_conversation(data:dict):
+    id = data["id_user"]
+    print(id)
+    conversation = conversation_by_user(id_user=id)
+    return {"response": conversation}
