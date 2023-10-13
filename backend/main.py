@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from gotrue.errors import AuthApiError
 import os
 from supabase import create_client
+import time
 
 
 from dotenv import load_dotenv
@@ -52,6 +53,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
 
     # Convert audio to text - production
     # Save the file temporarily
+    inicio = time.time()
     print("id identificado:",id)
     with open(file.filename, "wb") as buffer:
         buffer.write(await file.read())
@@ -83,6 +85,9 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
     # Crear un generador que produce fragmentos de datos
     def iterfile():
         yield audio_output
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
 
     # Usar para Post: Devolver audio de salida
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
@@ -90,12 +95,17 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
 @app.post("/post-texto")
 async def post_texto(data:dict):
 
+    inicio = time.time()
     message_decoded = data["question"]
     id = data["id"]
     print(message_decoded)
     print("id identificado:",id)
     #aqui hacer la petición a la base de datos dependiendo del id que mande del usuario
     response = get_chat_response(message_decoded,id)
+    print(response)
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
 
     return {"response": response}
 
