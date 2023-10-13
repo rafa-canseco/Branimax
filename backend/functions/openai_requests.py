@@ -10,11 +10,24 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext
 import os
+import re
 
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 openai.api_key = config("OPEN_AI_KEY")
 
+def clean_response_text(text):
+    cleaned_text = (text.encode().decode('unicode_escape'))
+    cleaned_text = re.sub(r'\s+',' ',cleaned_text)
+    return cleaned_text
+
+def fix_encoding(text):
+    try:
+        corrected_text = text.encode('iso-8859-1').decode('utf-8')
+        return corrected_text
+    except Exception as e:
+        print(f"Error fixing encoding: {e}")
+        return text  # Devuelve el texto original si hay un error
 
 #convert audio to text
 def convert_audio_to_text(audio_file):
@@ -48,7 +61,7 @@ def get_chat_response(message_input,id):
             db = Chroma.from_documents(texts,embeddings)
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
-            llm = OpenAI(temperature=0.4)
+            llm = OpenAI(temperature=0)
             # Definir la plantilla del mensaje 
             template = getPromtByCompany(id)
             
@@ -58,9 +71,9 @@ def get_chat_response(message_input,id):
             qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":custom_prompt})
             # Ejecutar el modelo con el mensaje de entrada
             response = qa.run(message_input)
-            print(response)
-
-            getConversationSaved(id,message_input,response)
+            cleaned_response =clean_response_text(response)
+            corrected_response = fix_encoding(cleaned_response)
+            getConversationSaved(id,message_input,cleaned_response)
 
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
@@ -69,7 +82,7 @@ def get_chat_response(message_input,id):
             print(f"Successful Requests: {cb.successful_requests}")
             print(f"Total Cost (USD): ${cb.total_cost}")
             # Devolver el texto del mensaje
-            return response
+            return corrected_response
     except Exception as e:
         print(e)
         return

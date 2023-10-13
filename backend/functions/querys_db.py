@@ -37,7 +37,6 @@ def getPromtByCompany(id):
     if not template_supabase.data:
         raise ValueError("Id:Error Company not registered")
     template = template_supabase.data[0]['prompt']
-    print(template)
     return template
 
 def getCompanyName(id):
@@ -54,16 +53,12 @@ def getConversationSaved(id, message_input, response):
         print("Nueva conversación iniciada:", new_conversation)
     else:
         existing_text = current_record.data[0]['text'] if current_record.data[0]['text'] is not None else ""
-        print("Texto existente:", existing_text)   
         # Actualizamos el texto con el mensaje del usuario y la respuesta de Scarlett
         updated_text = existing_text + "\nUsuario: " + message_input + "\nScarlett: " + response
-        print("Texto actualizado:", updated_text)   
         # Actualizamos el registro en la base de datos con el nuevo texto
         update_response = supabase.table("Conversation").update({"text": updated_text}).eq("id_user", id).execute()
-        print(update_response)
     # Verificamos que el registro se haya actualizado correctamente
     verification_record = supabase.table("Conversation").select("text").eq("id_user", id).execute()
-    print("Registro de verificación:", verification_record)
 
 def getVoice(id):
     voz_supabase = supabase.table("Particularities").select("voice").eq("id_company", id).execute()
