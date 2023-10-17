@@ -11,14 +11,15 @@ supabase=create_client(url,key)
 
 def download_csv_from_url(url, folder_path, file_name):
     response = requests.get(url)
-    with open(os.path.join(folder_path, file_name), 'w') as file:
-        file.write(response.text)
+    response.raise_for_status()
+    with open(os.path.join(folder_path, file_name), 'wb') as file:
+        file.write(response.content)
 
 def getUrlCsvForContext(id):
     companyName = getCompanyName(id)
     # Descargar el archivo CSV y guardarlo en la carpeta deseada
     folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'storage'))
-    file_name = f"{companyName}.csv"
+    file_name = f"{companyName}.pdf"
     full_file_path = os.path.join(folder_path, file_name)
     # Crear el directorio si no existe
     os.makedirs(folder_path, exist_ok=True)

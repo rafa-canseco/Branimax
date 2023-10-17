@@ -1,7 +1,7 @@
 import openai
 from decouple import config
 from langchain.callbacks import get_openai_callback
-from langchain.document_loaders import CSVLoader
+from langchain.document_loaders import CSVLoader,PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -48,9 +48,8 @@ def get_chat_response(message_input,id):
         csv = getUrlCsvForContext(id)
 
         with get_openai_callback() as cb:
-
             # Cargar el documento con los datos del cliente
-            loader = CSVLoader(csv)
+            loader = PyPDFLoader(csv)
             documents = loader.load()
             # Dividir el documento en fragmentos
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
@@ -64,7 +63,7 @@ def get_chat_response(message_input,id):
             llm = OpenAI(temperature=0)
             # Definir la plantilla del mensaje 
             template = getPromtByCompany(id)
-            
+    
             # Incluir el nuevo prompt
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
