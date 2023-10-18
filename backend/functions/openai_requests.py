@@ -72,7 +72,7 @@ def get_chat_response(message_input,id):
             response = qa.run(message_input)
             cleaned_response =clean_response_text(response)
             corrected_response = fix_encoding(cleaned_response)
-            getConversationSaved(id,message_input,cleaned_response)
+            getConversationSaved(id,message_input=message_input,response=corrected_response)
 
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
