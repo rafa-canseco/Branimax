@@ -1,6 +1,6 @@
 import requests
 from decouple import config
-from functions.querys_db import getVoice,getStability,getSimilarity,getStyle
+from functions.querys_db import getVoice,getStability,getSimilarity,getStyle,getCompanyId
 from pydub import AudioSegment
 import io
 
@@ -10,9 +10,10 @@ ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 #CONVERT TEXT TO SPEECH
 def convert_text_to_speech(message,id):
 
-    stability = getStability(id)
-    similarity = getSimilarity(id)
-    style = getStyle(id)
+    company_id = getCompanyId(id)
+    stability = getStability(company_id)
+    similarity = getSimilarity(company_id)
+    style = getStyle(company_id)
     #Define Data
     body = {
         "text": message,
@@ -29,7 +30,7 @@ def convert_text_to_speech(message,id):
         }
     }
 
-    voz = getVoice(id)
+    voz = getVoice(company_id)
 
     #Constructing Headers and Endpoint
     headers = {"xi-api-key": ELEVEN_LABS_API_KEY, "Content-Type": "application/json","accept": "audio/mpeg"}
