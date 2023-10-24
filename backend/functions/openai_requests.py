@@ -8,7 +8,7 @@ from langchain.vectorstores import Chroma
 from langchain import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
-from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext
+from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
 import os
 import re
 
@@ -49,8 +49,10 @@ def get_chat_response(message_input,id):
 
         with get_openai_callback() as cb:
             # Cargar el documento con los datos del cliente
+
             loader = PyPDFLoader(csv)
             documents = loader.load()
+
             # Dividir el documento en fragmentos
             text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000,chunk_overlap=0)
             texts = text_splitter.split_documents(documents)
@@ -62,8 +64,8 @@ def get_chat_response(message_input,id):
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
             llm = OpenAI(temperature=0)
             # Definir la plantilla del mensaje 
-            template = getPromtByCompany(id)
-    
+            id_company = getCompanyId(id)
+            template = getPromtByCompany(id_company)
             # Incluir el nuevo prompt
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador

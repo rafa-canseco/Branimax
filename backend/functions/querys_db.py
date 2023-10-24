@@ -17,6 +17,7 @@ def download_csv_from_url(url, folder_path, file_name):
 
 def getUrlCsvForContext(id):
     companyName = getCompanyName(id)
+    company_id = getCompanyId(id)
     # Descargar el archivo CSV y guardarlo en la carpeta deseada
     folder_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'storage'))
     file_name = f"{companyName}.pdf"
@@ -25,7 +26,7 @@ def getUrlCsvForContext(id):
     os.makedirs(folder_path, exist_ok=True)
     # Verificar si el archivo ya existe
     if not os.path.exists(full_file_path):
-        csv_supabase = supabase.table("Particularities").select("context").eq("id_company", id).execute()
+        csv_supabase = supabase.table("Particularities").select("context").eq("id_company", company_id).execute()
         if not csv_supabase.data:
             raise ValueError("Id:Error Company not registered")
         csv_url = csv_supabase.data[0]['context']
@@ -41,8 +42,14 @@ def getPromtByCompany(id):
     return template
 
 def getCompanyName(id):
-    companyName = supabase.table("Companys").select("name").eq("id", id).execute().data[0]['name']
+    company_id = getCompanyId(id)
+    companyName = supabase.table("Companys").select("name").eq("id", company_id).execute().data[0]['name']
+    print(companyName)
     return companyName
+
+def getCompanyId(id):
+    company_id= supabase.table("Users").select("id_company").eq("id",id).execute().data[0]['id_company']
+    return company_id
 
 def getConversationSaved(id, message_input, response):
     current_record = supabase.table("Conversation").select("text").eq("id_user", id).execute()
