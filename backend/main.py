@@ -74,7 +74,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
     print(chat_response)
     
-    # Convertir rßespuesta del chat a audio
+    # Convertir respuesta del chat a audio
     audio_output = convert_text_to_speech(chat_response,id)
 
     # Guardia: Asegurar salida
@@ -108,6 +108,37 @@ async def post_texto(data:dict):
     print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
 
     return {"response": response}
+
+@app.post("/post-texto-audio")
+async def post_texto_out_audio(data:dict):
+
+    inicio = time.time()
+    message_decoded = data["question"]
+    id = data["id"]
+    print(message_decoded)
+    print("id identificado:",id)
+    chat_response = get_chat_response(message_decoded,id)
+        # Guardia: Asegurar salida
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+    print(chat_response)
+
+    # Convertir respuesta del chat a audio
+    audio_response = convert_text_to_speech(chat_response,id)
+
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del audio")
+    print("audio convertido a WAV")
+    def iterfile():
+        yield audio_response
+
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+
+    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+
+
 
 @app.post("/signup")
 async def signup(data: dict):
