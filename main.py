@@ -171,6 +171,51 @@ async def post_texto_out_audio(data:dict):
 
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
+@app.post("/post_audio_audio_openai")
+async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
+
+    # Convert audio to text - production
+    # Save the file temporarily
+    inicio = time.time()
+    print("id identificado:",id)
+    with open(file.filename, "wb") as buffer:
+        buffer.write(await file.read())
+    audio_input = open(file.filename, "rb")
+
+    # Decode audio
+    message_decoded = convert_audio_to_text(audio_input)
+
+    # Guardia: Asegurar salida
+    if not message_decoded:
+        raise HTTPException(status_code=400, detail="Falló al decodificar audio")
+
+    # Obtener respuesta del chat
+    chat_response = get_chat_response(message_decoded, id)    
+
+    # Guardia: Asegurar salida
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+    print(chat_response)
+    
+    # Convertir respuesta del chat a audio
+    audio_output = speech_to_text_openai(input_text=chat_response)
+
+    # Guardia: Asegurar salida
+    if not audio_output:
+        raise HTTPException(status_code=400, detail="Falló la salida de audio")
+
+    print("audio convertido a wav")
+    # Crear un generador que produce fragmentos de datos
+    def iterfile():
+        yield audio_output
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+
+    # Usar para Post: Devolver audio de salida
+    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+
+
 
 @app.post("/signup")
 async def signup(data: dict):
