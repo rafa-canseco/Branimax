@@ -1,4 +1,3 @@
-
 from openai import OpenAI
 from decouple import config
 from langchain.callbacks import get_openai_callback
@@ -48,7 +47,7 @@ def convert_audio_to_text(audio_file):
         print(e)
         return
 
-    
+    #test
 def get_chat_response(message_input,id):
     from langchain.llms import OpenAI
 
