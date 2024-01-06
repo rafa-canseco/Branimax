@@ -11,6 +11,8 @@ from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsv
 import os
 import re
 # test
+
+print("error")
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
@@ -46,7 +48,7 @@ def convert_audio_to_text(audio_file):
         print(e)
         return
 
-    
+    #test
 def get_chat_response(message_input,id):
     from langchain.llms import OpenAI
 
