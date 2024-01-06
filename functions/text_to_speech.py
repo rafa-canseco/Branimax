@@ -1,6 +1,6 @@
 import requests
 from decouple import config
-from querys_db import getVoice,getStability,getSimilarity,getStyle,getCompanyId
+from functions.querys_db import getVoice,getStability,getSimilarity,getStyle,getCompanyId
 from pydub import AudioSegment
 import io
 

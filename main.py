@@ -139,9 +139,9 @@ async def post_texto_out_audio(data:dict):
 
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
-####endpoint para pruebas
+####endpoint beta 1.1
 
-@app.post("/post-texto-audio-testing")
+@app.post("/post_texto_audio_openai")
 async def post_texto_out_audio(data:dict):
 
     inicio = time.time()
@@ -170,8 +170,6 @@ async def post_texto_out_audio(data:dict):
     print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
 
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
-
-
 
 
 @app.post("/signup")

@@ -3,7 +3,7 @@ from openai import OpenAI
 import os
 from decouple import config
 import time
-from text_to_speech import convert_mp3_to_wav
+from functions.text_to_speech import convert_mp3_to_wav
 
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
@@ -28,7 +28,7 @@ def speech_to_text_openai(input_text):
 
 import requests
 from decouple import config
-from querys_db import getVoice,getStability,getSimilarity,getStyle,getCompanyId
+from functions.querys_db import getVoice,getStability,getSimilarity,getStyle,getCompanyId
 from pydub import AudioSegment
 import io
 
@@ -155,8 +155,8 @@ def convert_text_to_speech_original(message,id):
     end_time = time.time()
     print(f"Tiempo total de ejecución de Eleven Labs version original: {end_time - start_time} segundos")
 
-input_text = "esta es una muestra de audio para el avatar de inteligencia artificial"
-speech_to_text_openai(input_text)
-speech_to_text_eleven(input_text)
-convert_text_to_speech_multilingual(input_text,1)
-convert_text_to_speech_original(input_text,1)
+# input_text = "esta es una muestra de audio para el avatar de inteligencia artificial"
+# speech_to_text_openai(input_text)
+# speech_to_text_eleven(input_text)
+# convert_text_to_speech_multilingual(input_text,1)
+# convert_text_to_speech_original(input_text,1)
