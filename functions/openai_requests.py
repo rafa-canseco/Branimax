@@ -10,7 +10,7 @@ from langchain.chains import RetrievalQA
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
 import os
 import re
-
+# test
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
