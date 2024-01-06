@@ -1,11 +1,11 @@
-import openai
+from openai import OpenAI
 from decouple import config
 from langchain.callbacks import get_openai_callback
 from langchain.document_loaders import CSVLoader,PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain import OpenAI
+
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
@@ -14,7 +14,9 @@ import re
 
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
-openai.api_key = config("OPEN_AI_KEY")
+OpenAI.api_key = config("OPEN_AI_KEY")
+client = OpenAI()
+
 
 def clean_response_text(text):
     cleaned_text = (text.encode().decode('unicode_escape'))
@@ -32,8 +34,13 @@ def fix_encoding(text):
 #convert audio to text
 def convert_audio_to_text(audio_file):
     try:
-        transcript = openai.Audio.transcribe("whisper-1",audio_file)
-        message_text = transcript["text"]
+
+        transcript = client.audio.transcriptions.create(
+        model="whisper-1",
+        file=audio_file
+        )
+        transcript_dict = vars(transcript)
+        message_text = transcript_dict["text"]
         print(message_text)
         return message_text
     except Exception as e:
@@ -42,6 +49,7 @@ def convert_audio_to_text(audio_file):
 
     
 def get_chat_response(message_input,id):
+    from langchain.llms import OpenAI
 
     try:
         #aqui relacionamos el prompt al usuario 
@@ -62,7 +70,7 @@ def get_chat_response(message_input,id):
             db = Chroma.from_documents(texts,embeddings)
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
-            llm = OpenAI(temperature=0)
+            llm = OpenAI()
             # Definir la plantilla del mensaje 
             id_company = getCompanyId(id)
             template = getPromtByCompany(id_company)

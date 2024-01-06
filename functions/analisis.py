@@ -16,7 +16,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate
 )
-from langchain import OpenAI
+from langchain.llms import OpenAI
 import openai
 import time
 import os
@@ -29,7 +29,6 @@ url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
-openai.api_key = config("OPEN_AI_KEY")
 
 llm3= ChatOpenAI(temperature=0,
                          openai_api_key= os.getenv("OPEN_AI_KEY"),
