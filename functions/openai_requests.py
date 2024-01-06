@@ -1,3 +1,4 @@
+
 from openai import OpenAI
 from decouple import config
 from langchain.callbacks import get_openai_callback
@@ -11,6 +12,7 @@ from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsv
 import os
 import re
 
+print("error")
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
