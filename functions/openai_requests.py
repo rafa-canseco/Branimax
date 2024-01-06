@@ -5,7 +5,6 @@ from langchain.document_loaders import CSVLoader,PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
