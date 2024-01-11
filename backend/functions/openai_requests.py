@@ -62,7 +62,7 @@ def get_chat_response(message_input,id):
             db = Chroma.from_documents(texts,embeddings)
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
-            llm = OpenAI(temperature=0,model='gpt-3.5_turbo-instruct')
+            llm = OpenAI(temperature=0,model='gpt-3.5-turbo-instruct')
             # Definir la plantilla del mensaje 
             id_company = getCompanyId(id)
             template = getPromtByCompany(id_company)
