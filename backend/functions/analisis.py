@@ -202,7 +202,7 @@ def generate_question(company_name,question):
         embeddings = OpenAIEmbeddings()
         db=Chroma.from_texts(docs,embeddings)
         retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":1})
-        qa = RetrievalQA.from_chain_type(llm=OpenAI(temperature=0),chain_type="stuff",retriever=retriever,return_source_documents=True)
+        qa = RetrievalQA.from_chain_type(llm = OpenAI(model='gpt-3.5_turbo-instruct'),chain_type="stuff",retriever=retriever,return_source_documents=True)
         query = question
         result= qa({"query":query})
         print(result)
