@@ -425,7 +425,7 @@ async def message(request: Request):
             twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
             <Response>
                 <Message>
-                    <Media>https:servidorscarlett.com/static/audio_response.mp3</Media>
+                    <Media>https:www.servidorscarlett.com/static/audio_response.mp3</Media>
                 </Message>
             </Response>
             """
