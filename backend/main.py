@@ -2,7 +2,7 @@
 
 #Main Imports
 from fastapi import FastAPI,File,UploadFile,HTTPException,Form,Request
-from fastapi.responses import StreamingResponse,JSONResponse,Response
+from fastapi.responses import StreamingResponse,JSONResponse,Response,FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from gotrue.errors import AuthApiError
@@ -418,17 +418,14 @@ async def message(request: Request):
             if not audio_output:
                 raise HTTPException(status_code=400, detail="Falló la salida de audio")
             
-            audio_output_path = os.path.join(STATIC_DIR,"audio_output.ogg")
+            audio_output_path = os.path.join(STATIC_DIR, "audio_response.mp3")
             with open(audio_output_path, "wb") as audio_file:
                 audio_file.write(audio_output)
 
-        # <Media>https://d487-2806-10a6-19-34d5-7113-e58-a405-b1cc.ngrok-free.app/static/audio_output.ogg</Media>
-
-        
             twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
             <Response>
                 <Message>
-                    <Media>https://servidorscarlett.com/static/audio_output.ogg</Media>
+                    <Media>https:servidorscarlett.com/static/audio_response.mp3</Media>
                 </Message>
             </Response>
             """
@@ -449,3 +446,8 @@ async def message(request: Request):
         msg.body(chat_response)
 
         return Response(content=str(bot_resp), media_type="application/xml")
+    
+@app.get("/static/audio_response.mp3")
+async def serve_audio():
+    audio_mp3_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+    return FileResponse(audio_mp3_path, media_type="audio/mpeg")
