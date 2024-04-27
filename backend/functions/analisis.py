@@ -3,20 +3,20 @@ from dotenv import load_dotenv
 import os
 import requests
 from functions.querys_db import getCompanyConversation,get_total_users,get_info_users_global
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chains import create_extraction_chain
-from langchain.callbacks import get_openai_callback
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain_community.callbacks import get_openai_callback
+from langchain_openai import OpenAIEmbeddings
 from langchain.chains import RetrievalQA
-from langchain.vectorstores import SupabaseVectorStore,Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate
 )
-from langchain import OpenAI
+from langchain_openai import OpenAI
 import openai
 import time
 import os
@@ -29,7 +29,6 @@ url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
-openai.api_key = config("OPEN_AI_KEY")
 
 llm3= ChatOpenAI(temperature=0,
                          openai_api_key= os.getenv("OPEN_AI_KEY"),
@@ -143,7 +142,7 @@ def found_topics(company_name):
                                     verbose=False
                                     )
         print("iniciando cadena")
-        topics_found = chain.run({"input_documents":docs})
+        topics_found = chain.invoke({"input_documents":docs})
         print("----------")
         print("Topics found:")
         print(topics_found)
@@ -181,7 +180,7 @@ def scheme_topics(topics):
         "required": ["topic", "description"],
         }
         chain = create_extraction_chain(schema,llm3)
-        topics_structured = chain.run(topics)
+        topics_structured = chain.invoke(topics)
         print("---------------------------")
         print(topics_structured)
         print(f"Total Tokens: {cb.total_tokens}")
@@ -223,4 +222,3 @@ def get_resume_users(company_name):
 def get_info_users(company_name):
     users = get_info_users_global(company_name)
     return users
-

@@ -4,6 +4,7 @@ from functions.querys_db import getVoice,getStability,getSimilarity,getStyle,get
 from pydub import AudioSegment
 import io
 
+
 ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 
 
@@ -28,7 +29,7 @@ def convert_text_to_speech(message,id):
             "similarity_boost": similarity,
             "style": style,
         }
-    }
+        }
 
     voz = getVoice(company_id)
 

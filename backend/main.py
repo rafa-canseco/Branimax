@@ -1,25 +1,34 @@
 #uvicorn main:app
 
 #Main Imports
-from fastapi import FastAPI,File,UploadFile,HTTPException,Form
-from fastapi.responses import StreamingResponse,JSONResponse
+from fastapi import FastAPI,File,UploadFile,HTTPException,Form,Request
+from fastapi.responses import StreamingResponse,JSONResponse,Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from gotrue.errors import AuthApiError
 import os
 from supabase import create_client
 import time
-
-
+import requests
 from dotenv import load_dotenv
+from pydub import AudioSegment
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
 from functions.text_to_speech import convert_text_to_speech
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user
+from functions.openai_tts import speech_to_text_openai,speech_to_text_eleven
+from twilio.twiml.messaging_response import MessagingResponse
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+
 
 #Initiate App
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 #CORS - Origins
 origins = ["*"]
@@ -136,6 +145,82 @@ async def post_texto_out_audio(data:dict):
     tiempo_transcurrido = fin - inicio
     print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
 
+    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+
+####endpoint beta 1.1
+
+@app.post("/post_texto_audio_openai")
+async def post_texto_out_audio(data:dict):
+
+    inicio = time.time()
+    message_decoded = data["question"]
+    id = data["id"]
+    print(message_decoded)
+    print("id identificado:",id)
+    chat_response = get_chat_response(message_input=message_decoded,id=id)
+        # Guardia: Asegurar salida
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+    print(chat_response)
+
+    # Convertir respuesta del chat a audio
+    audio_response = speech_to_text_openai(input_text=chat_response)
+    # audio_response = speech_to_text_eleven(chat_response)
+
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del audio")
+    print("audio convertido a WAV")
+    def iterfile():
+        yield audio_response
+
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+
+    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+
+@app.post("/post_audio_audio_openai")
+async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
+
+    # Convert audio to text - production
+    # Save the file temporarily
+    inicio = time.time()
+    print("id identificado:",id)
+    with open(file.filename, "wb") as buffer:
+        buffer.write(await file.read())
+    audio_input = open(file.filename, "rb")
+
+    # Decode audio
+    message_decoded = convert_audio_to_text(audio_input)
+
+    # Guardia: Asegurar salida
+    if not message_decoded:
+        raise HTTPException(status_code=400, detail="Falló al decodificar audio")
+
+    # Obtener respuesta del chat
+    chat_response = get_chat_response(message_decoded, id)    
+
+    # Guardia: Asegurar salida
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+    print(chat_response)
+    
+    # Convertir respuesta del chat a audio
+    audio_output = speech_to_text_openai(input_text=chat_response)
+
+    # Guardia: Asegurar salida
+    if not audio_output:
+        raise HTTPException(status_code=400, detail="Falló la salida de audio")
+
+    print("audio convertido a wav")
+    # Crear un generador que produce fragmentos de datos
+    def iterfile():
+        yield audio_output
+    fin = time.time()
+    tiempo_transcurrido = fin - inicio
+    print(f"total time: {int(tiempo_transcurrido // 60)} minutos y {int(tiempo_transcurrido % 60)} segundos")
+
+    # Usar para Post: Devolver audio de salida
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
 
@@ -299,3 +384,68 @@ async def user_conversation(data:dict):
     print(id)
     conversation = conversation_by_user(id_user=id)
     return {"response": conversation}
+
+###Alcazar
+@app.post("/whatsapp")
+async def message(request: Request):
+    form_data = await request.form()
+
+    if "MediaContentType0" in form_data:
+        media_url = form_data["MediaUrl0"]
+        response = requests.get(media_url)
+        audio_data = response.content
+
+        if response.status_code == 200:
+
+            audio_oga_path = os.path.join(STATIC_DIR,"audio.oga")
+            with open(audio_oga_path, "wb") as file:
+                file.write(audio_data)
+            print("archivo de audio descargado")
+
+            audio = AudioSegment.from_file(audio_oga_path, format="ogg")
+            audio_wav_path = os.path.join(STATIC_DIR, "audio.wav")
+            audio.export(audio_wav_path, format="wav")
+
+            with open(audio_wav_path, "rb") as audio_file:
+                message_decoded = convert_audio_to_text(audio_file)
+            #Hardcoded ID at the moment
+            chat_response = get_chat_response(message_decoded,14)
+            print(chat_response)
+
+            audio_output = speech_to_text_openai(input_text=chat_response)
+            print("audio generado")
+
+            if not audio_output:
+                raise HTTPException(status_code=400, detail="Falló la salida de audio")
+            
+            audio_output_path = os.path.join(STATIC_DIR,"audio_output.ogg")
+            with open(audio_output_path, "wb") as audio_file:
+                audio_file.write(audio_output)
+
+        # <Media>https://d487-2806-10a6-19-34d5-7113-e58-a405-b1cc.ngrok-free.app/static/audio_output.ogg</Media>
+
+        
+            twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
+            <Response>
+                <Message>
+                    <Media>https://servidorscarlett.com/static/audio_output.ogg</Media>
+                </Message>
+            </Response>
+            """
+
+            return Response(content=twiml_response, media_type="application/xml")
+        
+        else:
+            return {"error": "Failed to download media"}
+    
+    else:
+        incoming_que = (await request.form()).get('Body', '').lower()
+        print(incoming_que)
+
+        chat_response = get_chat_response(incoming_que,14) #hardcoded at the moment
+        print(chat_response)
+        bot_resp =MessagingResponse()
+        msg = bot_resp.message()
+        msg.body(chat_response)
+
+        return Response(content=str(bot_resp), media_type="application/xml")
