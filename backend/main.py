@@ -19,8 +19,7 @@ from functions.text_to_speech import convert_text_to_speech
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user
 from functions.openai_tts import speech_to_text_openai,speech_to_text_eleven
-from twilio.twiml.messaging_response import MessagingResponse
-
+from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -422,15 +421,13 @@ async def message(request: Request):
             with open(audio_output_path, "wb") as audio_file:
                 audio_file.write(audio_output)
 
-            twiml_response = f"""<?xml version="1.0" encoding="UTF-8"?>
-            <Response>
-                <Message>
-                    <Media>https:www.servidorscarlett.com/static/audio_response.mp3</Media>
-                </Message>
-            </Response>
-            """
+            response = MessagingResponse()
+            message = Message()
+            message.body(chat_response)
+            message.media('https://www.servidorscarlett.com/static/audio_response.mp3')
+            response.append(message)
 
-            return Response(content=twiml_response, media_type="application/xml")
+            return Response(content=str(response), media_type="application/xml")
         
         else:
             return {"error": "Failed to download media"}
