@@ -424,7 +424,7 @@ async def message(request: Request):
             response = MessagingResponse()
             message = Message()
             message.body(chat_response)
-            message.media('https://www.servidorscarlett.com/static/audio_response.mp3')
+            message.media('https://da17-201-172-172-154.ngrok-free.app/static/audio_response.mp3')
             response.append(message)
 
             return Response(content=str(response), media_type="application/xml")
