@@ -9,12 +9,12 @@ os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
 client = OpenAI()
 
-def speech_to_text_openai(input_text):
+def speech_to_text_openai(input_text,voice):
     start_time = time.time()
     speech_file_path = Path(__file__).parent /  "openai_speech.mp3"
     response = client.audio.speech.create(
       model="tts-1",
-      voice="nova",
+      voice=voice,
       input=input_text
     )
     response.stream_to_file(speech_file_path)
@@ -36,12 +36,9 @@ ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 
 
 #CONVERT TEXT TO SPEECH
-def speech_to_text_eleven(message):
+def speech_to_text_eleven(message,voice,stability,similarity,style):
     start_time = time.time()
-    company_id = 1
-    stability = 0.5
-    similarity = 0.5
-    style = 0.5
+
     #Define Data
     body = {
         "text": message,
@@ -58,11 +55,9 @@ def speech_to_text_eleven(message):
         }
         }
 
-    voz = "5foAkxpX0K5wizIaF5vu"
-
     #Constructing Headers and Endpoint
     headers = {"xi-api-key": ELEVEN_LABS_API_KEY, "Content-Type": "application/json","accept": "audio/mpeg"}
-    endpoint = f"https://api.elevenlabs.io/v1/text-to-speech/{voz}/stream?optimize_streaming_latency=3"
+    endpoint = f"https://api.elevenlabs.io/v1/text-to-speech/{voice}/stream?optimize_streaming_latency=3"
 
     # Send request
     try:
