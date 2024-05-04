@@ -184,7 +184,7 @@ async def post_audio(file: UploadFile = File(...), id: str = Form(...)):
     # Usar para Post: Devolver audio de salida
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
-@app.post("/audio_to_audio")
+@app.post("/post-audio")
 async def post_audio_new(file: UploadFile = File(...),  id: str = Form(...)):
 
     print("id identificado:",id)
