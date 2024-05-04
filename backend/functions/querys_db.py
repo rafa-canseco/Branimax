@@ -135,5 +135,14 @@ def conversation_by_user(id_user):
     print(conversation)
     return conversation
 
+def getVoiceSource(id_company):
+    voice_Source = supabase.table("Particularities").select("voice_source").eq("id_company",id_company).execute()
+    voiceSource = voice_Source.data[0]['voice_source']
+    print(voiceSource)
+    return voiceSource
 
-
+def getExactVoice(id_company):
+    exact_voice = supabase.table("Particularities").select("voice").eq("id_company",id_company).execute()
+    exactVoice = exact_voice.data[0]['voice']
+    print(exactVoice)
+    return exactVoice
