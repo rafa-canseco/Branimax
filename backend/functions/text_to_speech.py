@@ -65,3 +65,37 @@ def convert_mp3_to_wav(mp3_data):
     wav_data.seek(0)
     print("exito convirtiendo audio")
     return wav_data.read()
+
+def convert_text_to_speech_whatsapp(message):
+
+    #Define Data
+    body = {
+        "text": message,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.06,
+            "similarity_boost":0.3,
+        }
+    }
+
+    voice_rachel = "UaWcvWlMFfVfzax5uO5e"
+
+
+
+    #Constructing Headers and Endpoint
+    headers = {"xi-api-key": ELEVEN_LABS_API_KEY, "Content-Type": "application/json","accept": "audio/mpeg"}
+    endpoint = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_rachel}"
+
+    # Send request
+    try:
+        print("generando voz")
+        response = requests.post(endpoint, json=body, headers=headers)
+    except Exception as e:
+        print(f"Ocurrió un error: {e}")
+        return
+    
+    #Handle Response 
+    if response.status_code == 200:
+        return response.content
+    else:
+        return

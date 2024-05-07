@@ -15,7 +15,7 @@ from pydub import AudioSegment
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response
-from functions.text_to_speech import convert_text_to_speech
+from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
@@ -499,7 +499,7 @@ async def message(request: Request):
             chat_response = get_chat_response(message_decoded,14)
             print(chat_response)
 
-            audio_output = speech_to_text_openai(input_text=chat_response)
+            audio_output = convert_text_to_speech_whatsapp(chat_response)
             print("audio generado")
 
             if not audio_output:
@@ -512,7 +512,7 @@ async def message(request: Request):
             response = MessagingResponse()
             message = Message()
             message.body(chat_response)
-            message.media('https:www.servidorscarlett.com/static/audio_response.mp3')
+            message.media('https://www.servidorscarlett.com/static/audio_response.mp3')
             response.append(message)
 
             return Response(content=str(response), media_type="application/xml")
