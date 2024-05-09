@@ -66,4 +66,3 @@ def procesar_video(script,video_name):
     print(f"Tiempo total de procesamiento: {tiempo_transcurrido:.2f} segundos")
     return download_url, stream_url
 
-procesar_video( "Hola, soy un video de prueba", "video_prueba")
