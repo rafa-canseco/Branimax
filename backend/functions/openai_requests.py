@@ -11,7 +11,7 @@ from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsv
 import os
 import re
 from langchain_openai import OpenAI
-from openai import OpenAI
+
 
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
@@ -50,7 +50,6 @@ def convert_audio_to_text(audio_file):
 
     #test
 def get_chat_response(message_input,id):
-    from langchain_openai import OpenAI
 
     try:
         #aqui relacionamos el prompt al usuario 
@@ -96,4 +95,15 @@ def get_chat_response(message_input,id):
     except Exception as e:
         print(e)
         return
-    
+
+def getResumeNote(text):
+
+    # prompt = PromptTemplate.from_template(template)
+    llm = OpenAI()
+    llm_chain =  llm
+    instruction = f"Sintetiza la siguiente nota periodística con máximo 100 palabras:  {text}"
+    llm_chain = llm_chain.invoke(instruction)
+    print(llm_chain)
+    return llm_chain
+
+

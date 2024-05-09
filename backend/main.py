@@ -14,11 +14,12 @@ from dotenv import load_dotenv
 from pydub import AudioSegment
 
 #Custom Function Imports
-from functions.openai_requests import convert_audio_to_text,get_chat_response
+from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote
 from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
+from functions.tavus_requests import procesar_video
 from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
@@ -536,3 +537,16 @@ async def message(request: Request):
 async def serve_audio():
     audio_mp3_path = os.path.join(STATIC_DIR, "audio_response.mp3")
     return FileResponse(audio_mp3_path, media_type="audio/mpeg")
+
+@app.post("/generate_resume")
+async def generate_resume(data:dict):
+    text = data["text"]
+    response = getResumeNote(text)
+    return {"response": response}
+
+@app.post("/tavus_endpoint")
+async def serve_avatar(data:dict):
+    script = data["script"]
+    title = data["title"]
+    download_url, stream_url = procesar_video(script =script,video_name= title)
+    return {"download_url": download_url, "stream_url": stream_url}
