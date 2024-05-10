@@ -10,9 +10,8 @@ def crear_video(script, video_name):
     print(script)
     print(video_name)
     url = "https://tavusapi.com/v2/videos"
-    background_url = "https://la-opinion-background.webflow.io/"
     payload = {
-        "background_url": background_url,
+        "background_source_url": "https://drive.google.com/uc?export=download&id=1j9YRjof8jSN5QpyJuOh7au0b4ISPAND4",
         "replica_id": "r660c4f3ba",
         "script": script,
         "video_name": "Testing"
@@ -22,7 +21,7 @@ def crear_video(script, video_name):
         "Content-Type": "application/json"
     }
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.request("POST", url, json=payload, headers=headers)
         if response.status_code == 200:
             try:
                 response_data = json.loads(response.text)
