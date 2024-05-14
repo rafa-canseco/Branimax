@@ -21,9 +21,16 @@ from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
 from functions.tavus_requests import procesar_video
 from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
+from memory.bot_state import BotState
+from layers.mainLayer import register_message_and_process
+from services.aiService import AIClass
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
+
+bot_state =BotState()
+api_key =os.environ.get("OPEN_AI_KEY")
+ai = AIClass(api_key=api_key, model="gpt-4o")
 
 
 #Initiate App
@@ -550,3 +557,11 @@ async def serve_avatar(data:dict):
     title = data["title"]
     download_url, stream_url = procesar_video(script =script,video_name= title)
     return {"download_url": download_url, "stream_url": stream_url}
+
+@app.post("/whatsapp_calendar")
+async def message(request: Request):
+    incoming_que = (await request.form()).get('Body', '').lower()
+    print(incoming_que)
+    # Llamar a register_message_and_process con el estado global
+    await register_message_and_process(incoming_que, bot_state,ai)
+    return {"status": "message processed"}
