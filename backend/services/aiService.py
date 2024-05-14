@@ -35,15 +35,46 @@ class AIClass:
                 ],
                 function_call={"name": "fn_get_prediction_intent"}
             )
-            print(response)
             # Convertir JSON a objeto
             function_call = response.choices[0].message.function_call
-            print(function_call)
             arguments = function_call.arguments
             prediction = json.loads(arguments)
-
+            print(prediction)
             return prediction
         except Exception as e:
             print(e)
             return {"prediction": ''}
+        
+    async def desired_date_fn(self, messages: list, model: str = None, temperature: float = 0) -> dict:
+        try:
+            completion = self.openai.chat.completions.create(
+                model=model or self.model,
+                temperature=temperature,
+                messages=messages,
+                functions=[
+                    {
+                        "name": "fn_desired_date",
+                        "description": "determine the user's desired date in the format yyyy/MM/dd HH:mm:ss",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "date": {
+                                    "type": "string",
+                                    "description": "yyyy/MM/dd HH:mm:ss.",
+                                }
+                            },
+                            "required": ["date"]
+                        }
+                    }
+                ],
+                function_call={"name": "fn_desired_date"}
+            )
+            # Convertir JSON a objeto
+            function_call = completion.choices[0].message.function_call
+            arguments = function_call.arguments
+            response = json.loads(arguments)
+            return response
+        except Exception as e:
+            print(e)
+            return {"date": ''}
 
