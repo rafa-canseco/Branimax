@@ -1,9 +1,10 @@
-
-from typing import List, Dict, Any
+from typing import Dict, Any
 
 class BotState:
-    def __init__(self):
-        self.state: Dict[str, Any] = {}
+    def __init__(self, initial_state: Dict[str, Any] = None):
+        if initial_state is None:
+            initial_state = {}
+        self.state: Dict[str, Any] = initial_state
 
     def get(self, key: str, default=None):
         return self.state.get(key, default)

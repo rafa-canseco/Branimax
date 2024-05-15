@@ -4,6 +4,7 @@ import os
 import requests
 load_dotenv()
 import json
+from datetime import datetime
 
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
@@ -146,3 +147,51 @@ def getExactVoice(id_company):
     exactVoice = exact_voice.data[0]['voice']
     print(exactVoice)
     return exactVoice
+
+def datetime_to_str(state):
+    for key, value in state.items():
+        if isinstance(value, datetime):
+            state[key] = value.isoformat()
+    return state
+
+def str_to_datetime(state):
+    for key, value in state.items():
+        try:
+            state[key] = datetime.fromisoformat(value)
+        except (ValueError, TypeError):
+            pass
+    return state
+
+
+def get_state(from_number):
+    response = supabase.table('bot_state').select('*').eq('from_number', from_number).execute()
+    if response.data:
+        state_dict = json.loads(response.data[0]['state'])
+        history = json.loads(response.data[0]['history'])
+        history_persistent = response.data[0].get('history_persistent', [])
+        state_dict = str_to_datetime(state_dict)
+        return state_dict, history, history_persistent
+    else:
+        return {}, [], []
+
+def update_state(from_number, state, history, history_persistent):
+    state = datetime_to_str(state)
+    state_data = json.dumps(state)
+    history_data = json.dumps(history)
+    history_persistent_data = json.dumps(history_persistent)
+    
+    # Intentar actualizar el registro
+    response, count = supabase.table('bot_state').update({
+        'state': state_data,
+        'history': history_data,
+        'history_persistent': history_persistent_data
+    }).eq('from_number', from_number).execute()
+    
+    # Si no se actualizó ninguna fila, insertar el registro
+    if count == 0:
+        response, count = supabase.table('bot_state').upsert({
+            'from_number': from_number,
+            'state': state_data,
+            'history': history_data,
+            'history_persistent': history_persistent_data
+        }).execute()

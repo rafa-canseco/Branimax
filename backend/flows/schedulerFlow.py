@@ -21,6 +21,7 @@ Asistente: "{respuesta en formato (yyyy/MM/dd HH:mm:ss)}"
 """
 
 DURATION_MEET = 45
+TIMEZONE = "Etc/GMT+6"  # GMT-6
 
 def generate_prompt_filter(history) -> str:
     now_date = get_full_current_date()
@@ -38,19 +39,31 @@ def is_within_interval(date, start, end):
     
     return start <= date <= end
 
-async def flow_schedule(state, ai: AIClass,body):
+async def flow_schedule(state, ai: AIClass, body):
     history = get_history_parse(state)
     list_ = get_current_calendar()
 
-    list_parse = [
-        {'from_date': parse(d), 'to_date': parse(d) + timedelta(minutes=DURATION_MEET)}
-        for d in list_
-    ]
 
+    # Normalizar las fechas en list_ al mismo formato y zona horaria
+    local_tz = pytz.timezone(TIMEZONE)
+    list_parse = []
+    for d in list_:
+        try:
+            from_date = parse(d)
+            if from_date.tzinfo is None:
+                from_date = local_tz.localize(from_date)
+            to_date = from_date + timedelta(minutes=DURATION_MEET)
+            list_parse.append({'from_date': from_date, 'to_date': to_date})
+        except Exception as e:
+            print(f"Error parsing date {d}: {e}")
 
     prompt_filter = generate_prompt_filter(history)
     response = await ai.desired_date_fn([{'role': 'system', 'content': prompt_filter}])
+    
     desired_date = parse(response['date'])
+    if desired_date.tzinfo is None:
+        desired_date = local_tz.localize(desired_date)
+    
     is_date_available = all(
         not is_within_interval(desired_date, item['from_date'], item['to_date'])
         for item in list_parse
@@ -58,7 +71,7 @@ async def flow_schedule(state, ai: AIClass,body):
 
     print(f"Desired Date: {desired_date}")
     print(f"Is Date Available: {is_date_available}")
-    if is_date_available is False:
+    if not is_date_available:
         response = 'Lo siento, esa hora ya está reservada. ¿Alguna otra fecha y hora?'
         handle_history({'role': 'assistant', 'content': response}, state)
         state.clear()
