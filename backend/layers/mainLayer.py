@@ -21,6 +21,7 @@ PROMPT_DISCRIMINATOR = """### Historial de Conversación (Vendedor/Cliente) ###
 Por favor, clasifica la siguiente conversación según la intención del usuario."""
 
 async def mainMessaging(state: BotState, ai: AIClass, body: str,from_number):
+    print(f"Estado actual de confirmation_phase: {state.get('confirmation_phase')}")
     if state.get('confirmation_phase'):
         response = await flow_confirm(state, ai, body,from_number)
         return response
@@ -40,6 +41,7 @@ async def mainMessaging(state: BotState, ai: AIClass, body: str,from_number):
         response = await flow_schedule(state, ai, body)
         if "¿Confirmo tu reserva?" in response:
             state.update({'confirmation_phase': True})
+            print("confirmation_phase actualizado a True")
         return response
 
 async def register_message_and_process(body: str, state: BotState, ai: AIClass,from_number):
