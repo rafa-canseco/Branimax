@@ -21,7 +21,7 @@ from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
 from functions.tavus_requests import procesar_video
 from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
-from memory.bot_state import BotState
+from utils.bot_state import BotState
 from layers.mainLayer import register_message_and_process
 from services.aiService import AIClass
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -560,8 +560,14 @@ async def serve_avatar(data:dict):
 
 @app.post("/whatsapp_calendar")
 async def message(request: Request):
-    incoming_que = (await request.form()).get('Body', '').lower()
-    print(incoming_que)
-    # Llamar a register_message_and_process con el estado global
-    await register_message_and_process(incoming_que, bot_state,ai)
-    return {"status": "message processed"}
+    form_data = await request.form()
+    incoming_que = form_data.get('Body', '').lower()
+    from_number = form_data.get('From')
+    print(f"Mensaje recibido de {from_number}: {incoming_que}")
+
+    # Llamar a register_message_and_process con el estado global y el número de teléfono
+    chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number)
+    bot_resp = MessagingResponse()
+    msg = bot_resp.message()
+    msg.body(chat_response)
+    return Response(content=str(bot_resp), media_type="application/xml")
