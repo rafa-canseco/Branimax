@@ -62,9 +62,10 @@ def speech_to_text_eleven_turbo(message,voice,stability,similarity,style):
     try:
         response = requests.post(endpoint, json=body, headers=headers)
         if response.status_code == 200:
-            # Comentado porque se va a quitar después
-            with open('elevenlabs_speech.mp3', 'wb') as f:
-                 f.write(response.content)
+            storage_path = Path(__file__).parent / "storage" / "elevenlabs_speech.mp3"
+            storage_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(storage_path, 'wb') as f:
+                f.write(response.content)
             end_time = time.time()
             print(f"Tiempo total de ejecución de Eleven Labs Turbo: {end_time - start_time} segundos")
             return response.content

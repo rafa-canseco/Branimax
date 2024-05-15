@@ -78,7 +78,6 @@ def get_chat_response(message_input,id):
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
             qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":custom_prompt})
-            # Ejecutar el modelo con el mensaje de entrada
             response = qa.run(message_input)
             cleaned_response =clean_response_text(response)
             corrected_response = fix_encoding(cleaned_response)
