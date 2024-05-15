@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse
 import pytz
 
+
 DURATION_MEET = 45
 TIMEZONE = "Etc/GMT+6"  # GMT-6
 
@@ -26,7 +27,7 @@ async def flow_confirm(state, ai, body, from_number):
         if '@' not in body:
             return "Debes ingresar un email correcto"
         state.update({'email': body})
-
+        
         desired_date = state.get('desiredDate')
         local_tz = pytz.timezone(TIMEZONE)
         start_dt = desired_date.astimezone(local_tz)
@@ -43,7 +44,7 @@ async def flow_confirm(state, ai, body, from_number):
             },
             'phone': from_number
         }
-
+        print(date_object)
         await add_to_calendar(date_object)
         clear_history(state)
         state.update({'confirmation_phase': False})  # Limpiar el estado de confirmación

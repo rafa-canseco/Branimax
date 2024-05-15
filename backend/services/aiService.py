@@ -73,6 +73,7 @@ class AIClass:
             function_call = completion.choices[0].message.function_call
             arguments = function_call.arguments
             response = json.loads(arguments)
+            print("respuesta de la ia ",response)
             return response
         except Exception as e:
             print(e)
