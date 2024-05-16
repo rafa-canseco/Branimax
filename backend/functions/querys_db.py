@@ -189,6 +189,12 @@ def update_state(from_number, state, history, history_persistent):
     
     # Si no se actualizó ninguna fila, insertar el registro
     if count == 0:
+        # Verificar si la columna 'from_number' existe
+        columns = supabase.table('bot_state').select('from_number').limit(1).execute()
+        if 'from_number' not in columns.data[0]:
+            # Crear la columna 'from_number' si no existe
+            supabase.table('bot_state').alter().add_column('from_number', 'text').execute()
+        
         response, count = supabase.table('bot_state').upsert({
             'from_number': from_number,
             'state': state_data,
