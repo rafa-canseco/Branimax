@@ -172,6 +172,8 @@ def get_state(from_number):
         state_dict = str_to_datetime(state_dict)
         return state_dict, history, history_persistent
     else:
+        # Si el número no existe, crearlo
+        supabase.table('bot_state').insert({'from_number': from_number, 'state': '{}', 'history': '[]', 'history_persistent': '[]'}).execute()
         return {}, [], []
 
 def update_state(from_number, state, history, history_persistent):
