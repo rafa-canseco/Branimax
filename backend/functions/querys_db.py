@@ -203,3 +203,6 @@ def update_state(from_number, state, history, history_persistent):
             'history': history_data,
             'history_persistent': history_persistent_data
         }).execute()
+
+def delete_state(from_number):
+    supabase.table('bot_state').delete().eq('from_number', from_number).execute()

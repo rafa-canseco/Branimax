@@ -6,6 +6,7 @@ from flows.sellerFlow import sellerFlow
 from flows.schedulerFlow import flow_schedule
 from flows.confirmFlow import flow_confirm  
 from functions.querys_db import get_state,update_state
+from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
 import json
 
 state = BotState()
@@ -62,6 +63,12 @@ async def register_message_and_process(body: str, state: BotState, ai: AIClass, 
     
     state.update(state_dict)
     handle_history({'role': 'user', 'content': body}, state)
+
+    if not state.get('has_interacted'):
+        welcome_message = "Hola! 👋 Soy Lina, tu asistente virtual 🤖. ¿En qué puedo ayudarte hoy? 😊✨"
+        state.update({'has_interacted': True})
+        update_state(from_number, state.state, get_history(state), history_persistent)
+        return welcome_message
     
     response = await mainMessaging(state, ai, body, from_number)
     

@@ -17,7 +17,7 @@ from pydub import AudioSegment
 from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote
 from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
-from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability
+from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
 from functions.tavus_requests import procesar_video
 from twilio.twiml.messaging_response import Body, Media, Message, MessagingResponse
@@ -564,10 +564,15 @@ async def message(request: Request):
     incoming_que = form_data.get('Body', '').lower()
     from_number = form_data.get('From')
     print(f"Mensaje recibido de {from_number}: {incoming_que}")
-
-    # Llamar a register_message_and_process con el estado global y el número de teléfono
+    
+    bot_response = MessagingResponse()
+    message = bot_response.message()
+    
+    if incoming_que == "borrar":
+        delete_state(from_number)
+        message.body("registro borrado")
+        return Response(content=str(bot_response), media_type="application/xml")
+    
     chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number)
-    bot_resp = MessagingResponse()
-    msg = bot_resp.message()
-    msg.body(chat_response)
-    return Response(content=str(bot_resp), media_type="application/xml")
+    message.body(chat_response)
+    return Response(content=str(bot_response), media_type="application/xml")
