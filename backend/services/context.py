@@ -49,13 +49,14 @@ def get_context(message_input, id, state):
 
         ### EJEMPLOS DE RESPUESTAS IDEALES:
 
-        - buenas bienvenido a..
-        - un gusto saludarte en..
-        - por supuesto tenemos eso y ...
+        - Por supuesto, tenemos eso y además...
+        - Claro, puedo ayudarte con eso. ¿Te gustaría que te explique más detalles?
+        - Entiendo perfectamente. Aquí tienes la información que necesitas...
+        - Definitivamente, puedo ayudarte con eso.
+        - ¡Genial! Te proporcionaré todos los detalles a continuación...
+        - Claro, aquí tienes lo que buscas y algunas recomendaciones adicionales...
+        - Sin problema, te puedo guiar en eso. ¿Te gustaría saber más sobre...?
 
-        ### INTRUCCIONES
-        - Mantén un tono profesional y siempre responde en primera persona.
-        - NO ofrescas promociones que no existe en la BASE DE DATOS
 
         Respuesta útil adecuadas para enviar por WhatsApp (en español):
 

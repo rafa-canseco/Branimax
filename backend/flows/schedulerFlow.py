@@ -40,6 +40,8 @@ def is_within_interval(date, start, end):
     return start <= date <= end
 
 async def flow_schedule(state, ai: AIClass, body):
+
+
     history = get_history_parse(state)
     list_ = get_current_calendar()
 
@@ -72,14 +74,14 @@ async def flow_schedule(state, ai: AIClass, body):
     print(f"Desired Date: {desired_date}")
     print(f"Is Date Available: {is_date_available}")
     if not is_date_available:
-        response = 'Lo siento, esa hora ya está reservada. ¿Alguna otra fecha y hora?'
+        response = 'Lo siento 😔, esa hora ya está reservada. ¿Te gustaría elegir otra fecha y hora? 📅⏰'
         handle_history({'role': 'assistant', 'content': response}, state)
         state.clear()
         return response
     else:
         formatted_date_from = desired_date.strftime('%I:%M %p')
         formatted_date_to = (desired_date + timedelta(minutes=DURATION_MEET)).strftime('%I:%M %p')
-        message = f"¡Perfecto! Tenemos disponibilidad de {formatted_date_from} a {formatted_date_to} el día {desired_date.strftime('%d/%m/%Y')}. ¿Confirmo tu reserva? *si*"
+        message = f"¡Perfecto! 🎉 Tenemos disponibilidad de {formatted_date_from} a {formatted_date_to} el día {desired_date.strftime('%d/%m/%Y')} 📅. ¿Confirmo tu reserva? 😊✨"
         handle_history({'content': message, 'role': 'assistant'}, state)
         state.update({'desiredDate': desired_date})
         return message

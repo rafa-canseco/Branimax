@@ -11,21 +11,21 @@ TIMEZONE = "Etc/GMT+6"  # GMT-6
 async def flow_confirm(state, ai, body, from_number):
     if 'cancelar' in body.lower():
         clear_history(state)
-        state.update({'confirmation_phase': False})  # Limpiar el estado de confirmación
-        return "¿Cómo puedo ayudarte?"
+        state.update({'confirmation_phase': False})  
+        return "¿Cómo puedo ayudarte? 😊"
 
     if not state.get('name'):
         if not state.get('name_prompted'):
             state.update({'name_prompted': True})
-            return "Ok, voy a pedirte unos datos para agendar. ¿Cuál es tu nombre?"
+            return "Ok, voy a pedirte unos datos para agendar. ¿Cuál es tu nombre? 😊📝"
         else:
             state.update({'name': body})
             state.update({'name_prompted': False})
-            return "Última pregunta, ¿Cuál es tu email?"
+            return "Última pregunta, ¿Cuál es tu email? 📧"
 
     if not state.get('email'):
         if '@' not in body:
-            return "Debes ingresar un email correcto"
+            return "Debes ingresar un email correcto 📧❗"
         state.update({'email': body})
         
         desired_date = state.get('desiredDate')
@@ -48,6 +48,11 @@ async def flow_confirm(state, ai, body, from_number):
         await add_to_calendar(date_object)
         clear_history(state)
         state.update({'confirmation_phase': False})  # Limpiar el estado de confirmación
-        return "¡Listo! Agendado. Buen día."
+        
+        # Construir el mensaje de confirmación
+        confirmation_message = (
+            f"¡Listo {date_object['name']}! Tu cita está agendada para el día {start_dt.strftime('%Y-%m-%d %H:%M')}"
+        )
+        return confirmation_message
 
-    return "Ok, voy a pedirte unos datos para agendar. ¿Cuál es tu nombre?"
+    return "Ok, voy a pedirte unos datos para agendar. ¿Cuál es tu nombre? 😊📝"
