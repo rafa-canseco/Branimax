@@ -577,3 +577,41 @@ async def message(request: Request):
     chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number)
     message.body(chat_response)
     return Response(content=str(bot_response), media_type="application/xml")
+
+@app.post("/whatsapp_alcazar")
+async def message(request: Request):
+    form_data = await request.form()
+    id=17
+    bot_resp = MessagingResponse()
+    msg = bot_resp.message()
+
+    if "MediaContentType0" in form_data:
+        media_url = form_data["MediaUrl0"]
+        response = requests.get(media_url)
+        audio_data = response.content
+
+        if response.status_code == 200:
+            audio_oga_path = os.path.join(STATIC_DIR,"audio.oga")
+            with open(audio_oga_path,"wb") as file:
+                file.write(audio_data)
+            print("Archivo de audio descargado")
+
+            audio = AudioSegment.from_file(audio_oga_path, format="ogg")
+            audio_wav_path = os.path.join(STATIC_DIR,"audio.wav")
+            audio.export(audio_wav_path,format="wav")
+
+            with open(audio_wav_path,"rb") as audio_file:
+                message_decoded = convert_audio_to_text(audio_file)
+            chat_response = get_chat_response(message_decoded,id)
+            print(chat_response)
+        else: 
+            chat_response= "error al descargar el archivo de audio"
+
+    else:        
+        incoming_que = (await request.form()).get('Body', '').lower()
+        print(incoming_que)
+        chat_response = get_chat_response(incoming_que,id)
+        print(chat_response)
+    
+    msg.body(chat_response)
+    return Response(content=str(bot_resp), media_type="application/xml")
