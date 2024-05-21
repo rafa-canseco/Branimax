@@ -10,7 +10,8 @@ from langchain.chains import RetrievalQA
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
 import os
 import re
-from langchain_openai import OpenAI
+from langchain_openai import ChatOpenAI
+from openai import OpenAI
 
 
 #retrieve our eviroment variables
@@ -36,14 +37,13 @@ def fix_encoding(text):
 def convert_audio_to_text(audio_file):
     try:
 
-        transcript = client.audio.transcriptions.create(
-        model="whisper-1",
-        file=audio_file
+        response = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=audio_file,
         )
-        transcript_dict = vars(transcript)
-        message_text = transcript_dict["text"]
-        print(message_text)
-        return message_text
+        transcription = response.text
+        print(transcription)
+        return transcription
     except Exception as e:
         print(e)
         return
@@ -53,6 +53,7 @@ def get_chat_response(message_input,id):
 
     try:
         #aqui relacionamos el prompt al usuario 
+        print(id)
         csv = getUrlCsvForContext(id)
 
         with get_openai_callback() as cb:
@@ -70,7 +71,7 @@ def get_chat_response(message_input,id):
             db = Chroma.from_documents(texts,embeddings)
             retriever = db.as_retriever(search_type="similarity",search_kwargs={"k":2})
             # Iniciar el modelo de lenguaje, definir la temperatura y el modelo
-            llm = OpenAI(model='gpt-3.5-turbo-instruct')
+            llm = ChatOpenAI(model='gpt-4o')
             # Definir la plantilla del mensaje 
             id_company = getCompanyId(id)
             template = getPromtByCompany(id_company)
@@ -78,10 +79,10 @@ def get_chat_response(message_input,id):
             custom_prompt = PromptTemplate(template=template,input_variables=["context","question"])
             # Crear una instancia de RetrievalQA con el modelo de lenguaje, el tipo de cadena y el recuperador
             qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":custom_prompt})
-            response = qa.run(message_input)
-            cleaned_response =clean_response_text(response)
-            corrected_response = fix_encoding(cleaned_response)
-            getConversationSaved(id,message_input=message_input,response=corrected_response)
+            response = qa.invoke({"query":message_input})
+            print(response['result'])
+
+            # getConversationSaved(id,message_input=message_input,response=response)
 
             # Imprimir las estadísticas de la solicitud
             print(f"Total Tokens: {cb.total_tokens}")
@@ -90,7 +91,7 @@ def get_chat_response(message_input,id):
             print(f"Successful Requests: {cb.successful_requests}")
             print(f"Total Cost (USD): ${cb.total_cost}")
             # Devolver el texto del mensaje
-            return corrected_response
+            return response['result']
     except Exception as e:
         print(e)
         return
@@ -98,10 +99,10 @@ def get_chat_response(message_input,id):
 def getResumeNote(text):
 
     # prompt = PromptTemplate.from_template(template)
-    llm = OpenAI()
+    llm = ChatOpenAI()
     llm_chain =  llm
     instruction = f"Sintetiza la siguiente nota periodística con máximo 100 palabras:  {text}"
-    llm_chain = llm_chain.invoke(instruction)
+    llm_chain = llm_chain.invoke({"query":instruction})
     print(llm_chain)
     return llm_chain
 
