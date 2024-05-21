@@ -484,6 +484,7 @@ async def user_conversation(data:dict):
 @app.post("/whatsapp")
 async def message(request: Request):
     form_data = await request.form()
+    id=17
 
     if "MediaContentType0" in form_data:
         media_url = form_data["MediaUrl0"]
@@ -504,7 +505,7 @@ async def message(request: Request):
             with open(audio_wav_path, "rb") as audio_file:
                 message_decoded = convert_audio_to_text(audio_file)
             #Hardcoded ID at the moment
-            chat_response = get_chat_response(message_decoded,14)
+            chat_response = get_chat_response(message_decoded,id)
             print(chat_response)
 
             audio_output = convert_text_to_speech_whatsapp(chat_response)
@@ -520,7 +521,7 @@ async def message(request: Request):
             response = MessagingResponse()
             message = Message()
             message.body(chat_response)
-            message.media('https://www.servidorscarlett.com/static/audio_response.mp3')
+            message.media('https://9724-2806-10a6-19-66a8-c908-8e17-bde3-1331.ngrok-free.app/static/audio_response.mp3')
             response.append(message)
 
             return Response(content=str(response), media_type="application/xml")
@@ -532,7 +533,7 @@ async def message(request: Request):
         incoming_que = (await request.form()).get('Body', '').lower()
         print(incoming_que)
 
-        chat_response = get_chat_response(incoming_que,14) #hardcoded at the moment
+        chat_response = get_chat_response(incoming_que,id) #hardcoded at the moment
         print(chat_response)
         bot_resp =MessagingResponse()
         msg = bot_resp.message()
@@ -540,10 +541,10 @@ async def message(request: Request):
 
         return Response(content=str(bot_resp), media_type="application/xml")
     
-@app.get("/static/audio_response.mp3")
-async def serve_audio():
-    audio_mp3_path = os.path.join(STATIC_DIR, "audio_response.mp3")
-    return FileResponse(audio_mp3_path, media_type="audio/mpeg")
+# @app.get("/static/audio_response.mp3")
+# async def serve_audio():
+#     audio_mp3_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+#     return FileResponse(audio_mp3_path, media_type="audio/mpeg")
 
 @app.post("/generate_resume")
 async def generate_resume(data:dict):
