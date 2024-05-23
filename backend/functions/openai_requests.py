@@ -8,7 +8,7 @@ from langchain_community.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from langchain_core.messages import HumanMessage, SystemMessage
-from querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
+from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
 import os
 import re
 from langchain_openai import ChatOpenAI
