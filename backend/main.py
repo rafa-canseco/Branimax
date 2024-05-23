@@ -24,6 +24,8 @@ from twilio.twiml.messaging_response import Body, Media, Message, MessagingRespo
 from utils.bot_state import BotState
 from layers.mainLayer import register_message_and_process
 from services.aiService import AIClass
+from promuevo.services.aiService import AIClassPromuevo
+from promuevo.layers.mainLayerPromuevo import register_message_and_process_promuevo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -31,6 +33,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 bot_state =BotState()
 api_key =os.environ.get("OPEN_AI_KEY")
 ai = AIClass(api_key=api_key, model="gpt-4o")
+aiPromuevo = AIClassPromuevo(api_key=api_key, model="gpt-4o")
 
 
 #Initiate App
@@ -541,10 +544,6 @@ async def message(request: Request):
 
         return Response(content=str(bot_resp), media_type="application/xml")
     
-# @app.get("/static/audio_response.mp3")
-# async def serve_audio():
-#     audio_mp3_path = os.path.join(STATIC_DIR, "audio_response.mp3")
-#     return FileResponse(audio_mp3_path, media_type="audio/mpeg")
 
 @app.post("/generate_resume")
 async def generate_resume(data:dict):
@@ -615,3 +614,22 @@ async def message(request: Request):
     
     msg.body(chat_response)
     return Response(content=str(bot_resp), media_type="application/xml")
+
+
+@app.post("/promuevo")
+async def message(data:dict):
+    incoming_que= data["question"]
+    id = data["id"]
+    user_id =data["user_id"]
+    database = "promuevodb"
+    print(incoming_que)
+
+    if incoming_que == "reiniciar":
+        delete_state(database,user_id)
+        response = "proceso Reiniciado"
+        return {"response": response}
+    
+    chat_response = await register_message_and_process_promuevo(incoming_que,bot_state,aiPromuevo,user_id,database)
+    
+    return chat_response
+

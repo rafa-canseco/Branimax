@@ -163,8 +163,8 @@ def str_to_datetime(state):
     return state
 
 
-def get_state(from_number):
-    response = supabase.table('bot_state').select('*').eq('from_number', from_number).execute()
+def get_state(from_number,database):
+    response = supabase.table(database).select('*').eq('from_number', from_number).execute()
     if response.data:
         state_dict = json.loads(response.data[0]['state'])
         history = json.loads(response.data[0]['history'])
@@ -173,17 +173,17 @@ def get_state(from_number):
         return state_dict, history, history_persistent
     else:
         # Si el número no existe, crearlo
-        supabase.table('bot_state').insert({'from_number': from_number, 'state': '{}', 'history': '[]', 'history_persistent': '[]'}).execute()
+        supabase.table(database).insert({'from_number': from_number, 'state': '{}', 'history': '[]', 'history_persistent': '[]'}).execute()
         return {}, [], []
 
-def update_state(from_number, state, history, history_persistent):
+def update_state(from_number, state, history, history_persistent,database):
     state = datetime_to_str(state)
     state_data = json.dumps(state)
     history_data = json.dumps(history)
     history_persistent_data = json.dumps(history_persistent)
     
     # Intentar actualizar el registro
-    response, count = supabase.table('bot_state').update({
+    response, count = supabase.table(database).update({
         'state': state_data,
         'history': history_data,
         'history_persistent': history_persistent_data
@@ -192,17 +192,17 @@ def update_state(from_number, state, history, history_persistent):
     # Si no se actualizó ninguna fila, insertar el registro
     if count == 0:
         # Verificar si la columna 'from_number' existe
-        columns = supabase.table('bot_state').select('from_number').limit(1).execute()
+        columns = supabase.table(database).select('from_number').limit(1).execute()
         if 'from_number' not in columns.data[0]:
             # Crear la columna 'from_number' si no existe
-            supabase.table('bot_state').alter().add_column('from_number', 'text').execute()
+            supabase.table(database).alter().add_column('from_number', 'text').execute()
         
-        response, count = supabase.table('bot_state').upsert({
+        response, count = supabase.table(database).upsert({
             'from_number': from_number,
             'state': state_data,
             'history': history_data,
             'history_persistent': history_persistent_data
         }).execute()
 
-def delete_state(from_number):
-    supabase.table('bot_state').delete().eq('from_number', from_number).execute()
+def delete_state(database,fromUUID):
+    supabase.table(database).delete().eq('from_number', fromUUID).execute()
