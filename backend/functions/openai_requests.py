@@ -109,14 +109,3 @@ def getResumeNote(text):
     return response.content 
 
 
-text = """
-### Avances en Git: Soluciones a Problemas de Conectividad
-
-En el ámbito del desarrollo de software, Git sigue siendo la herramienta de referencia para la gestión de versiones. No obstante, recientes reportes de desarrolladores han destacado problemas de conectividad al ejecutar comandos como `git pull`, con errores relacionados a la comunicación HTTP/2.
-
-Estos incidentes, aunque esporádicos, resaltan la necesidad de una conexión a Internet robusta y la importancia de mantener las herramientas actualizadas. Entre las soluciones propuestas se incluyen reintentar la operación, ajustar configuraciones de buffer HTTP, y forzar el uso de HTTP/1.1 en lugar de HTTP/2.
-
-La comunidad de desarrolladores se mantiene atenta y proactiva, buscando constantemente mejorar la experiencia del usuario. Estos esfuerzos aseguran que Git continúe siendo una herramienta confiable y eficiente para la colaboración y el control de versiones en proyectos de software.
-"""
-
-getResumeNote(text)
