@@ -615,7 +615,6 @@ async def message(request: Request):
     msg.body(chat_response)
     return Response(content=str(bot_resp), media_type="application/xml")
 
-
 @app.post("/promuevo")
 async def message(data:dict):
     incoming_que= data["question"]

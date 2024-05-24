@@ -11,7 +11,6 @@ def crear_video(script, video_name):
     print(video_name)
     url = "https://tavusapi.com/v2/videos"
     payload = {
-        "background_source_url": "https://drive.google.com/uc?export=download&id=1j9YRjof8jSN5QpyJuOh7au0b4ISPAND4",
         "replica_id": "r660c4f3ba",
         "script": script,
         "video_name": "Testing"
