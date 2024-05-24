@@ -9,6 +9,7 @@ from promuevo.services.aiService import AIClassPromuevo
 from functions.querys_db import get_state, update_state
 from promuevo.flows.sellerFlow import sellerFlow
 from promuevo.flows.serviceFlow import serviceIdentifier
+from promuevo.flows.recruitmentFlow import flow_recruit
 import json
 
 
@@ -61,6 +62,11 @@ async def register_message_and_process_promuevo(
 
 async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_number):
 
+    print(f"Estado actual de recruitment_phase: {state.get('recruitment_phase')}")
+    if state.get("recruitment_phase"):
+        response = await flow_recruit(state, body,from_number)
+        return response
+
     history = get_history_parse(state)
     prompt = PROMPT_DISCRIMINATOR.replace("{HISTORY}", history)
 
@@ -76,6 +82,7 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
         response = "LigaDeCalendly"
         return response
     if "RECLUTAR" in prediction.get("prediction", ""):
-        response = "reclutar"
+        response = await flow_recruit(state,body,from_number)
+        return response
 
     return

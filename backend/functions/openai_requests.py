@@ -101,7 +101,6 @@ def getResumeNote(text):
 
     # prompt = PromptTemplate.from_template(template)
     llm = ChatOpenAI(model='gpt-4o')
-    llm_chain =  llm
     instruction = f"Sintetiza la siguiente nota periodística con máximo 100 palabras: {text}"
     messages = [HumanMessage(content=instruction)]
     response = llm.invoke(messages)

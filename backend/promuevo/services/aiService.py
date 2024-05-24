@@ -54,14 +54,14 @@ class AIClassPromuevo:
                 functions=[
                     {
                         "name": "fn_get_service_prediction_intent",
-                        "description": "Predict the user desired or most suitable service for a given conversation",
+                        "description": "Predict the user desired or most suitable service for a given conversation,use generic if no option is suitable",
                         "parameters": {
                             "type": "object",
                             "properties": {
                                 "prediction": {
                                     "type": "string",
                                     "description": "The predicted user intention.",
-                                    "enum": ["Consultoría de Negocios", "Desarrollo de Software", "Marketing Digital", "Soporte Técnico", "Diseño Gráfico"]
+                                    "enum": ["Promotoría", "Degustación & Demostración", "Software de Gestión en PDV", "Trademarketing", "Gestión de herramientas","Investigación del consumidor","generic"]
                                 }
                             },
                             "required": ["prediction"]
