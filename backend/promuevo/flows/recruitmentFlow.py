@@ -1,4 +1,5 @@
 from promuevo.utilsPromuvo.historyPromuevo import clear_history
+from promuevo.services.spreadsheet import write_lead
 
 
 async def flow_recruit(state,body,from_number):
@@ -45,6 +46,17 @@ async def flow_recruit(state,body,from_number):
     
     if not state.get('phone'):
         state.update({'phone': body})
+        
+        date_object = {
+            'name': state.get('name'),
+            'age': state.get('age'),
+            'city': state.get('city'),
+            'education_level': state.get('education_level'),
+            'desired_position': state.get('desired_position'),
+            'email': state.get('email'),
+            'phone': state.get('phone')
+        }
+        server =await write_lead(date_object)
         response = ( 
             f"¡Gracias {state.get('name')}! Hemos recibido tus datos:"
             f"Edad: {state.get('age')}"
