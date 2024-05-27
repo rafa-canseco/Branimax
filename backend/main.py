@@ -628,7 +628,7 @@ async def message(data:dict):
         response = "proceso Reiniciado"
         return {"response": response}
     
-    chat_response = await register_message_and_process_promuevo(incoming_que,bot_state,aiPromuevo,user_id,database)
+    response = await register_message_and_process_promuevo(incoming_que,bot_state,aiPromuevo,user_id,database)
     
-    return chat_response
+    return {"response": response}
 
