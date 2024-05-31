@@ -79,7 +79,11 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
         response = await serviceIdentifier(state, ai)
         return response
     if "RESERVAR" in prediction.get("prediction", ""):
-        response = "LigaDeCalendly"
+        response = """Claro, con gusto te pongo en contacto con un asesor. Por favor, agenda una cita en el siguiente enlace de Calendly y estaremos encantados de atenderte:
+
+                        https://calendly.com/promuevo/30min
+
+                        ¡Esperamos hablar contigo pronto!"""
         return response
     if "RECLUTAR" in prediction.get("prediction", ""):
         response = await flow_recruit(state,body,from_number)
