@@ -11,15 +11,18 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
 import os
 import re
+from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
+from langchain_core.prompts import ChatPromptTemplate
 
 
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
 client = OpenAI()
-
+llm = ChatOpenAI(temperature=1,model="gpt-4o")
+output_parser = StrOutputParser()
 
 def clean_response_text(text):
     cleaned_text = (text.encode().decode('unicode_escape'))
@@ -107,4 +110,56 @@ def getResumeNote(text):
     print(response.content)
     return response.content 
 
+def generate_tweet_simple(prompt):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt),
+        ("user", "{input}")
+    ])
+
+    chain = prompt | llm | output_parser
+    response = chain.invoke({"input": "genera un tweet interesante debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
+    return response
+
+def generate_response(prompt, tweet_original,indicacion,hashtag):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt),
+        ("user", "{input}")
+    ])
+    
+    chain = prompt | llm | output_parser
+    response = chain.invoke({"input": f"genera un tweet respuesta a este tweet {tweet_original} siguiendo esta indicación : {indicacion} y usa el siguiente hash : {hashtag},debe obligatoriamente ser menor a 140 caracteres,  escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto.: "})
+    print(response)
+    return response
+
+
+def generate_resume(lista_de_tweets):
+    prompt = "Eres un bot de twitter diseñado para resumir los tweets de un usuario dado y dar los insights mas importantes para sus publicaciones, debes dar la información clara y de manera digerida "
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt),
+        ("user", "{input}")
+    ])
+    
+    chain = prompt | llm | output_parser
+    response = chain.invoke({"input": f"Aquí tienes una lista de tweets recientes de un usuario. Por favor, analízalos y proporciona un resumen conciso que destaque los temas principales y los puntos más importantes de lo que el usuario ha estado discutiendo:: {lista_de_tweets}"})
+    return response
+
+def generate_tweet(prompt, topic, hashtag):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt),
+        ("user", "{input}")
+    ])
+
+    chain = prompt | llm | output_parser
+    response = chain.invoke({"input": f"genera un tweet interesante sobre el siguiente tema {topic} asegurate de incluir los siguientes {hashtag} ,debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
+    return response
+
+def generate_tweet_url(prompt, topic, hashtag,url):
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt),
+        ("user", "{input}")
+    ])
+
+    chain = prompt | llm | output_parser
+    response = chain.invoke({"input": f"genera un tweet interesante sobre el siguiente tema {topic} asegurate de incluir los siguientes {hashtag} y {url},debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
+    return response
 

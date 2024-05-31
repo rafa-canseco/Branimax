@@ -12,6 +12,7 @@ import time
 import requests
 from dotenv import load_dotenv
 from pydub import AudioSegment
+from pydantic import BaseModel
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote
@@ -26,6 +27,7 @@ from layers.mainLayer import register_message_and_process
 from services.aiService import AIClass
 from promuevo.services.aiService import AIClassPromuevo
 from promuevo.layers.mainLayerPromuevo import register_message_and_process_promuevo
+from twitter.executions.Reply import single_response_preview ,respond_to_tweet
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -35,6 +37,15 @@ api_key =os.environ.get("OPEN_AI_KEY")
 ai = AIClass(api_key=api_key, model="gpt-4o")
 aiPromuevo = AIClassPromuevo(api_key=api_key, model="gpt-4o")
 
+class BotAssignment(BaseModel):
+    profileId: int
+    botCount: int
+
+class ReplyTweetData(BaseModel):
+    tweetId: str
+    indication: str
+    hashtags: list[str]
+    botAssignments: list[BotAssignment]
 
 #Initiate App
 app = FastAPI()
@@ -631,4 +642,23 @@ async def message(data:dict):
     response = await register_message_and_process_promuevo(incoming_que,bot_state,aiPromuevo,user_id,database)
     
     return {"response": response}
+
+@app.post("/simulate_tweet")
+async def simulate_tweet(data: dict):
+    tweetId = data.get("tweetId")
+    hashtags = data.get("hashtags", [])
+    indication = data.get("indication")
+    profile_id = data.get("profile", {}).get("id")
+    response = single_response_preview(tweetId,profile_id,indication,hashtags)
+    return response
+
+@app.post("/respond_to_tweet")
+async def reply_tweet(data: ReplyTweetData):
+    try:
+        print(data)
+        respond_to_tweet(data.tweetId, data.indication, data.hashtags, data.botAssignments)
+        return {"response": "Tweet responded successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
