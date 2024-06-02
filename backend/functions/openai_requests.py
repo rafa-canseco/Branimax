@@ -25,9 +25,8 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 supabase: Client = create_client(supabase_url=SUPABASE_URL, supabase_key=SUPABASE_KEY)
 
 embeddings = OpenAIEmbeddings(request_timeout=400)
-#retrieve our eviroment variables
-os.environ["OPENAI_API_KEY"] =config("OPENAI_API_KEY")
-OpenAI.api_key = config("OPEN_AI_KEY")
+os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
+OpenAI.api_key = config("OPENAI_API_KEY")
 client = OpenAI()
 llm = ChatOpenAI(temperature=1,model="gpt-4o")
 output_parser = StrOutputParser()
