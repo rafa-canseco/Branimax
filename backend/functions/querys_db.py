@@ -8,6 +8,9 @@ from decouple import config
 load_dotenv()
 import json
 from datetime import datetime
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_API_KEY")
 
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
