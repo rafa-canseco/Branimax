@@ -9,8 +9,8 @@ from decouple import config
 import time
 from functions.text_to_speech import convert_mp3_to_wav
 
-os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
-OpenAI.api_key = config("OPEN_AI_KEY")
+os.environ["OPENAI_API_KEY"] =config("OPENAI_API_KEY")
+OpenAI.api_key = config("OPENAI_API_KEY")
 client = OpenAI()
 
 def speech_to_text_openai(input_text,voice):

@@ -28,10 +28,10 @@ load_dotenv()
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
-os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
+os.environ["OPENAI_API_KEY"] =config("OPENAI_API_KEY")
 
 llm3= ChatOpenAI(temperature=0,
-                         openai_api_key= os.getenv("OPEN_AI_KEY"),
+                         openai_api_key= os.getenv("OPENAI_API_KEY"),
                          model_name="gpt-3.5-turbo",
                          request_timeout=220
                          )
@@ -77,7 +77,7 @@ def found_topics(company_name):
     with get_openai_callback() as cb:
 
         llm4=ChatOpenAI(temperature=0,
-                            openai_api_key= os.getenv("OPEN_AI_KEY"),
+                            openai_api_key= os.getenv("OPENAI_API_KEY"),
                             model_name="gpt-4",
                             request_timeout=220
                             )

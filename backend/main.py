@@ -33,7 +33,7 @@ STATIC_DIR = os.path.join(BASE_DIR, "static")
 
 
 bot_state =BotState()
-api_key =os.environ.get("OPEN_AI_KEY")
+api_key =os.environ.get("OPENAI_API_KEY")
 ai = AIClass(api_key=api_key, model="gpt-4o")
 aiPromuevo = AIClassPromuevo(api_key=api_key, model="gpt-4o")
 
