@@ -5,18 +5,25 @@ from langchain_community.document_loaders import CSVLoader,PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import SupabaseVectorStore
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from langchain_core.messages import HumanMessage, SystemMessage
-from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId
+from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId,getPromtByCompany
 import os
 import re
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from openai import OpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from supabase.client import Client, create_client
 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+supabase: Client = create_client(supabase_url=SUPABASE_URL, supabase_key=SUPABASE_KEY)
+
+embeddings = OpenAIEmbeddings(request_timeout=400)
 #retrieve our eviroment variables
 os.environ["OPENAI_API_KEY"] =config("OPEN_AI_KEY")
 OpenAI.api_key = config("OPEN_AI_KEY")
@@ -163,3 +170,22 @@ def generate_tweet_url(prompt, topic, hashtag,url):
     response = chain.invoke({"input": f"genera un tweet interesante sobre el siguiente tema {topic} asegurate de incluir los siguientes {hashtag} y {url},debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
     return response
 
+def retrieveContext():
+    vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documents",
+        query_name="match_documents",
+    )
+    return vector_store
+
+def get_chat_response_vectorized(message_input,id):
+    context = retrieveContext()
+    retriever = context.as_retriever(search_type="similarity", search_kwargs={"k":2})
+    idCompany = getCompanyId(id)
+    template = getPromtByCompany(idCompany)
+
+    customPrompt = PromptTemplate(template=template,input_variables=["context","question"])
+    qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":customPrompt})
+    response = qa.invoke({"query": message_input})
+    return response["result"]

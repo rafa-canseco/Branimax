@@ -15,7 +15,7 @@ from pydub import AudioSegment
 from pydantic import BaseModel
 
 #Custom Function Imports
-from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote
+from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote,get_chat_response_vectorized
 from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state
@@ -518,7 +518,7 @@ async def message(request: Request):
 
                 with open(audio_wav_path, "rb") as audio_file:
                     message_decoded = convert_audio_to_text(audio_file)
-                chat_response = get_chat_response(message_decoded, id)
+                chat_response = get_chat_response_vectorized(message_decoded, id)
                 print(chat_response)
 
                 audio_output = convert_text_to_speech_whatsapp(chat_response)
@@ -545,7 +545,7 @@ async def message(request: Request):
             incoming_que = form_data.get('Body', '').lower()
             print(incoming_que)
 
-            chat_response = get_chat_response(incoming_que, id)
+            chat_response = get_chat_response_vectorized(incoming_que, id)
             print(chat_response)
             bot_resp = MessagingResponse()
             msg = bot_resp.message()

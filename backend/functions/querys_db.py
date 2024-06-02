@@ -1,5 +1,7 @@
 from supabase import create_client
 from dotenv import load_dotenv
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import SupabaseVectorStore
 import os
 import requests
 load_dotenv()
@@ -9,6 +11,7 @@ from datetime import datetime
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
+embeddings = OpenAIEmbeddings()
 
 def download_csv_from_url(url, folder_path, file_name):
     response = requests.get(url)
@@ -214,3 +217,11 @@ def getPrompt(id):
     template = template_supabase.data[0]['prompt']
     return template
 
+def retrieveContext():
+        vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documents",
+        query_name="match_documents",
+        )
+        return vector_store
