@@ -12,7 +12,7 @@ from datetime import datetime
 url =os.environ.get("SUPABASE_URL")
 key =os.environ.get("SUPABASE_KEY")
 supabase=create_client(url,key)
-OPENAI_API_KEY = os.getenv("OPENAI_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 embeddings = OpenAIEmbeddings()
 
 def download_csv_from_url(url, folder_path, file_name):
