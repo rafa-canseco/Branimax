@@ -13,7 +13,7 @@ def crear_video(script, video_name):
     payload = {
         "replica_id": "r660c4f3ba",
         "script": script,
-        "video_name": "Testing"
+        "video_name": video_name
     }
     headers = {
         "x-api-key": TAVUS_API_KEY,
@@ -64,3 +64,11 @@ def procesar_video(script,video_name):
     print(f"Tiempo total de procesamiento: {tiempo_transcurrido:.2f} segundos")
     return download_url, stream_url
 
+def get_videos():
+    
+    url = "https://tavusapi.com/v2/videos"
+    headers = {"x-api-key": TAVUS_API_KEY}
+
+    response = requests.request("GET", url, headers=headers)
+
+    return response.text

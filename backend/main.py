@@ -20,7 +20,7 @@ from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
 from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
-from functions.tavus_requests import procesar_video
+from functions.tavus_requests import procesar_video,get_videos
 from twilio.twiml.messaging_response import Message, MessagingResponse
 from utils.bot_state import BotState
 from layers.mainLayer import register_message_and_process
@@ -661,4 +661,12 @@ async def reply_tweet(data: ReplyTweetData):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/videos_tavus")
+async def serve_videos():
+    try:
+        response = get_videos()
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
