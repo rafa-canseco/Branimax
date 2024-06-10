@@ -28,7 +28,7 @@ embeddings = OpenAIEmbeddings(request_timeout=400)
 os.environ["OPENAI_API_KEY"] = config("OPENAI_API_KEY")
 OpenAI.api_key = config("OPENAI_API_KEY")
 client = OpenAI()
-llm = ChatOpenAI(temperature=1,model="gpt-4o")
+llm = ChatOpenAI(temperature=0,model="gpt-4o")
 output_parser = StrOutputParser()
 
 def clean_response_text(text):
