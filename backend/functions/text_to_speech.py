@@ -78,7 +78,7 @@ def convert_text_to_speech_whatsapp(message):
         }
     }
 
-    voice_rachel = "5foAkxpX0K5wizIaF5vu"
+    voice_rachel = "XrExE9yKIg1WjnnlVkGX"
 
 
 
