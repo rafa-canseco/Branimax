@@ -170,6 +170,28 @@ def generate_tweet_url(prompt, topic, hashtag,url):
     response = chain.invoke({"input": f"genera un tweet interesante sobre el siguiente tema {topic} asegurate de incluir los siguientes {hashtag} y {url},debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
     return response
 
+def generateEmbeddigs():
+    try:
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'alcazarbot.pdf')
+
+        loader = PyPDFLoader(pdf)
+        documents = loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+        docs = text_splitter.split_documents(documents)
+
+        vector_store = SupabaseVectorStore.from_documents(
+            docs,
+            embeddings,
+            client=supabase,
+            table_name="documentsalcazar",
+            # query_name="match_documents",
+            chunk_size=500,
+        )
+        print("Embeddings creados y guardados exitosamente")
+    except Exception as e:
+        print(f"Error al crear embeddings: {e}")
+
+
 def retrieveContext():
     vector_store = SupabaseVectorStore(
         embedding=embeddings,
@@ -179,13 +201,28 @@ def retrieveContext():
     )
     return vector_store
 
-def get_chat_response_vectorized(message_input,id):
-    context = retrieveContext()
-    retriever = context.as_retriever(search_type="similarity", search_kwargs={"k":2})
+def retrieveContextAlcazar():
+    vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documentsalcazar",
+        query_name="match_documents_alcazar"
+    )
+    return vector_store
+
+def get_chat_response_vectorized(message_input, id):
+    print(id)
+    if id == 17:
+        context = retrieveContextAlcazar()
+    else:
+        context = retrieveContext()
+    
+    retriever = context.as_retriever(search_type="similarity", search_kwargs={"k": 2})
     idCompany = getCompanyId(id)
     template = getPromtByCompany(idCompany)
 
-    customPrompt = PromptTemplate(template=template,input_variables=["context","question"])
-    qa = RetrievalQA.from_chain_type(llm=llm,chain_type="stuff",retriever=retriever,return_source_documents=False,chain_type_kwargs={"prompt":customPrompt})
+    customPrompt = PromptTemplate(template=template, input_variables=["context", "question"])
+    qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=False, chain_type_kwargs={"prompt": customPrompt})
     response = qa.invoke({"query": message_input})
     return response["result"]
+

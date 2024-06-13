@@ -668,5 +668,76 @@ async def serve_videos():
         return {"response": response}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
+@app.post("/alcazar_whatsapp")
+async def message(request: Request):
+    try:
+        form_data = await request.form()
+        id = 17
+
+        if "MediaContentType0" in form_data:
+            media_url = form_data["MediaUrl0"]
+            response = requests.get(media_url)
+            audio_data = response.content
+
+            if response.status_code == 200:
+                audio_oga_path = os.path.join(STATIC_DIR, "audio.oga")
+                with open(audio_oga_path, "wb") as file:
+                    file.write(audio_data)
+                print("archivo de audio descargado")
+
+                audio = AudioSegment.from_file(audio_oga_path, format="ogg")
+                audio_wav_path = os.path.join(STATIC_DIR, "audio.wav")
+                audio.export(audio_wav_path, format="wav")
+
+                with open(audio_wav_path, "rb") as audio_file:
+                    message_decoded = convert_audio_to_text(audio_file)
+                chat_response = get_chat_response_vectorized(message_decoded, id)
+                print(chat_response)
+
+                ###TODO: HACERLO DINAMICO AUDIO
+                audio_output = convert_text_to_speech_whatsapp(chat_response)
+                print("audio generado")
+
+                if not audio_output:
+                    raise HTTPException(status_code=400, detail="Falló la salida de audio")
+                
+                audio_output_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+                with open(audio_output_path, "wb") as audio_file:
+                    audio_file.write(audio_output)
+
+                response = MessagingResponse()
+                message = Message()
+                message.body(chat_response)
+                message.media('https://servidorscarlett.com/static/audio_response.mp3')
+                response.append(message)
+
+                return Response(content=str(response), media_type="application/xml")
+            else:
+                return Response(content="Failed to download media", status_code=400)
+        
+        else:
+            incoming_que = form_data.get('Body', '').lower()
+            print(incoming_que)
+
+            chat_response = get_chat_response_vectorized(incoming_que, id)
+            print(chat_response)
+            bot_resp = MessagingResponse()
+            msg = bot_resp.message()
+            msg.body(chat_response)
+
+            return Response(content=str(bot_resp), media_type="application/xml")
+        
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return Response(content="Internal Server Error", status_code=500)
+
+    
+@app.post("/vanquish")
+async def vanquish(data:dict):
+    incoming_que = data["question"]
+    database = "vanquishdb"
+    print(incoming_que)
+
+    if incoming_que == "reiniciar":
+        delete_state(database)
