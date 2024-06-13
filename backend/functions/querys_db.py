@@ -215,6 +215,8 @@ def update_state(from_number, state, history, history_persistent,database):
 def delete_state(database,fromUUID):
     supabase.table(database).delete().eq('from_number', fromUUID).execute()
 
+
+
 def getPrompt(id):
     template_supabase = supabase.table("prompts").select("prompt").eq('id_name', id).execute()
     if not template_supabase.data:

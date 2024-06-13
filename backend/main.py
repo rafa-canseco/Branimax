@@ -591,7 +591,7 @@ async def message(request: Request):
 @app.post("/whatsapp_alcazar")
 async def message(request: Request):
     form_data = await request.form()
-    id=18
+    id=17
     bot_resp = MessagingResponse()
     msg = bot_resp.message()
 
@@ -612,7 +612,7 @@ async def message(request: Request):
 
             with open(audio_wav_path,"rb") as audio_file:
                 message_decoded = convert_audio_to_text(audio_file)
-            chat_response = get_chat_response(message_decoded,id)
+            chat_response = get_chat_response_vectorized(message_decoded,id)
             print(chat_response)
         else: 
             chat_response= "error al descargar el archivo de audio"
@@ -620,7 +620,7 @@ async def message(request: Request):
     else:        
         incoming_que = (await request.form()).get('Body', '').lower()
         print(incoming_que)
-        chat_response = get_chat_response(incoming_que,id)
+        chat_response = get_chat_response_vectorized(incoming_que,id)
         print(chat_response)
     
     msg.body(chat_response)
@@ -669,11 +669,11 @@ async def serve_videos():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/alcazar_whatsapp")
+@app.post("/whatsapp_demo")
 async def message(request: Request):
     try:
         form_data = await request.form()
-        id = 17
+        id = 18
 
         if "MediaContentType0" in form_data:
             media_url = form_data["MediaUrl0"]
@@ -733,11 +733,18 @@ async def message(request: Request):
         return Response(content="Internal Server Error", status_code=500)
 
     
-@app.post("/vanquish")
-async def vanquish(data:dict):
-    incoming_que = data["question"]
-    database = "vanquishdb"
-    print(incoming_que)
+@app.post("/vanquish_whatsapp")
+async def vanquish(request: Request):
+    form_data = await request.form()
+    incoming_que = form_data.get('Body', '').lower()
+    from_number = form_data.get('From')
+    print(f"Mensaje recibido de {from_number}: {incoming_que}")
 
-    if incoming_que == "reiniciar":
-        delete_state(database)
+    bot_response = MessagingResponse()
+    message = bot_response.message()
+    
+    if incoming_que == "borrar":
+        delete_state(from_number)
+        message.body("registro borrado")
+        return Response(content=str(bot_response), media_type="application/xml")
+    
