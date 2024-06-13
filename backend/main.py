@@ -304,7 +304,7 @@ async def post_audio_new(file: UploadFile = File(...),  id: str = Form(...)):
         raise HTTPException(status_code=400, detail="Falló al decodificar audio")
 
     # Obtener respuesta del chat
-    chat_response = get_chat_response(message_decoded, id)    
+    chat_response = get_chat_response_vectorized(message_decoded, id)    
 
     # Guardia: Asegurar salida
     if not chat_response:
