@@ -210,7 +210,7 @@ def retrieveContextAlcazar():
     )
     return vector_store
 
-def get_chat_response_vectorized(message_input, id):
+def get_chat_response_vectorized(message_input, id,template):
     print(id)
     if id == 17:
         context = retrieveContextAlcazar()
@@ -218,8 +218,7 @@ def get_chat_response_vectorized(message_input, id):
         context = retrieveContext()
     
     retriever = context.as_retriever(search_type="similarity", search_kwargs={"k": 2})
-    idCompany = getCompanyId(id)
-    template = getPromtByCompany(idCompany)
+
 
     customPrompt = PromptTemplate(template=template, input_variables=["context", "question"])
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=False, chain_type_kwargs={"prompt": customPrompt})

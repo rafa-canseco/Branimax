@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote,get_chat_response_vectorized
 from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
-from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state
+from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state,getPromtByCompany
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
 from functions.tavus_requests import procesar_video,get_videos
 from twilio.twiml.messaging_response import Message, MessagingResponse
@@ -28,6 +28,7 @@ from services.aiService import AIClass
 from promuevo.services.aiService import AIClassPromuevo
 from promuevo.layers.mainLayerPromuevo import register_message_and_process_promuevo
 from twitter.executions.Reply import single_response_preview ,respond_to_tweet
+from vanquish.mainLayerVanquish import register_message_on_db
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -304,7 +305,9 @@ async def post_audio_new(file: UploadFile = File(...),  id: str = Form(...)):
         raise HTTPException(status_code=400, detail="Falló al decodificar audio")
 
     # Obtener respuesta del chat
-    chat_response = get_chat_response_vectorized(message_decoded, id)    
+    idCompany = getCompanyId(id)
+    template = getPromtByCompany(idCompany)
+    chat_response = get_chat_response_vectorized(message_decoded, id,template)    
 
     # Guardia: Asegurar salida
     if not chat_response:
@@ -518,7 +521,9 @@ async def message(request: Request):
 
                 with open(audio_wav_path, "rb") as audio_file:
                     message_decoded = convert_audio_to_text(audio_file)
-                chat_response = get_chat_response_vectorized(message_decoded, id)
+                idCompany = getCompanyId(id)
+                template = getPromtByCompany(idCompany)
+                chat_response = get_chat_response_vectorized(message_decoded, id,template)
                 print(chat_response)
 
                 audio_output = convert_text_to_speech_whatsapp(chat_response)
@@ -544,8 +549,9 @@ async def message(request: Request):
         else:
             incoming_que = form_data.get('Body', '').lower()
             print(incoming_que)
-
-            chat_response = get_chat_response_vectorized(incoming_que, id)
+            idCompany = getCompanyId(id)
+            template = getPromtByCompany(idCompany)
+            chat_response = get_chat_response_vectorized(incoming_que, id,template)
             print(chat_response)
             bot_resp = MessagingResponse()
             msg = bot_resp.message()
@@ -612,7 +618,9 @@ async def message(request: Request):
 
             with open(audio_wav_path,"rb") as audio_file:
                 message_decoded = convert_audio_to_text(audio_file)
-            chat_response = get_chat_response_vectorized(message_decoded,id)
+            idCompany = getCompanyId(id)
+            template = getPromtByCompany(idCompany)
+            chat_response = get_chat_response_vectorized(incoming_que, id,template)
             print(chat_response)
         else: 
             chat_response= "error al descargar el archivo de audio"
@@ -620,7 +628,9 @@ async def message(request: Request):
     else:        
         incoming_que = (await request.form()).get('Body', '').lower()
         print(incoming_que)
-        chat_response = get_chat_response_vectorized(incoming_que,id)
+        idCompany = getCompanyId(id)
+        template = getPromtByCompany(idCompany)
+        chat_response = get_chat_response_vectorized(incoming_que, id,template)
         print(chat_response)
     
     msg.body(chat_response)
@@ -692,7 +702,9 @@ async def message(request: Request):
 
                 with open(audio_wav_path, "rb") as audio_file:
                     message_decoded = convert_audio_to_text(audio_file)
-                chat_response = get_chat_response_vectorized(message_decoded, id)
+                idCompany = getCompanyId(id)
+                template = getPromtByCompany(idCompany)
+                chat_response = get_chat_response_vectorized(message_decoded, id,template)
                 print(chat_response)
 
                 ###TODO: HACERLO DINAMICO AUDIO
@@ -720,7 +732,9 @@ async def message(request: Request):
             incoming_que = form_data.get('Body', '').lower()
             print(incoming_que)
 
-            chat_response = get_chat_response_vectorized(incoming_que, id)
+            idCompany = getCompanyId(id)
+            template = getPromtByCompany(idCompany)
+            chat_response = get_chat_response_vectorized(incoming_que, id,template)
             print(chat_response)
             bot_resp = MessagingResponse()
             msg = bot_resp.message()
@@ -735,16 +749,21 @@ async def message(request: Request):
     
 @app.post("/vanquish_whatsapp")
 async def vanquish(request: Request):
+    id = 18
     form_data = await request.form()
     incoming_que = form_data.get('Body', '').lower()
     from_number = form_data.get('From')
+    database = "vanquishdb"
     print(f"Mensaje recibido de {from_number}: {incoming_que}")
 
     bot_response = MessagingResponse()
     message = bot_response.message()
     
     if incoming_que == "borrar":
-        delete_state(from_number)
+        delete_state(database,from_number)
         message.body("registro borrado")
         return Response(content=str(bot_response), media_type="application/xml")
     
+    response = await register_message_on_db(incoming_que,bot_state,id)
+    message.body(response)
+    return Response(content=str(bot_response), media_type="application/xml")

@@ -11,7 +11,6 @@ from promuevo.utilsPromuvo.historyPromuevo import get_history_parse
 def get_context(message_input,id,state):
     pdf = getUrlCsvForContext(id)
 
-
     history = get_history_parse(state)
     loader = PyPDFLoader(pdf)
     documents = loader.load()
