@@ -9,7 +9,7 @@ from langchain_community.vectorstores import SupabaseVectorStore
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 from langchain_core.messages import HumanMessage, SystemMessage
-from functions.querys_db import getPromtByCompany,getConversationSaved,getUrlCsvForContext,getCompanyId,getPromtByCompany
+from functions.querys_db import getPromtByCompany,getUrlCsvForContext,getCompanyId,getPromtByCompany
 import os
 import re
 from langchain_core.output_parsers import StrOutputParser
@@ -172,7 +172,7 @@ def generate_tweet_url(prompt, topic, hashtag,url):
 
 def generateEmbeddigs():
     try:
-        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'alcazarbot.pdf')
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'cartesiano.pdf')
 
         loader = PyPDFLoader(pdf)
         documents = loader.load()
@@ -183,7 +183,7 @@ def generateEmbeddigs():
             docs,
             embeddings,
             client=supabase,
-            table_name="documentsalcazar",
+            table_name="documents_cartesiano",
             # query_name="match_documents",
             chunk_size=500,
         )
@@ -201,6 +201,15 @@ def retrieveContext():
     )
     return vector_store
 
+def retrieveContextCartesianoSpa():
+    vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documents_cartesiano",
+        query_name="match_documents_cartesiano",
+    )
+    return vector_store
+
 def retrieveContextAlcazar():
     vector_store = SupabaseVectorStore(
         embedding=embeddings,
@@ -210,18 +219,18 @@ def retrieveContextAlcazar():
     )
     return vector_store
 
-def get_chat_response_vectorized(message_input, id,template):
+def get_chat_response_vectorized(message_input, id, template):
     print(id)
     if id == 17:
         context = retrieveContextAlcazar()
+    elif id == 19:
+        context = retrieveContextCartesianoSpa()
     else:
         context = retrieveContext()
     
     retriever = context.as_retriever(search_type="similarity", search_kwargs={"k": 2})
 
-
     customPrompt = PromptTemplate(template=template, input_variables=["context", "question"])
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=False, chain_type_kwargs={"prompt": customPrompt})
     response = qa.invoke({"query": message_input})
     return response["result"]
-

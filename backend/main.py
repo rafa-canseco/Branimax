@@ -577,20 +577,22 @@ async def serve_avatar(data:dict):
 
 @app.post("/whatsapp_calendar")
 async def message(request: Request):
+    id = 19
     form_data = await request.form()
     incoming_que = form_data.get('Body', '').lower()
     from_number = form_data.get('From')
+    database= "cartesianodb"
     print(f"Mensaje recibido de {from_number}: {incoming_que}")
     
     bot_response = MessagingResponse()
     message = bot_response.message()
     
     if incoming_que == "borrar":
-        delete_state(from_number)
+        delete_state(database,from_number)
         message.body("registro borrado")
         return Response(content=str(bot_response), media_type="application/xml")
     
-    chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number)
+    chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number,database,id)
     message.body(chat_response)
     return Response(content=str(bot_response), media_type="application/xml")
 
@@ -764,6 +766,6 @@ async def vanquish(request: Request):
         message.body("registro borrado")
         return Response(content=str(bot_response), media_type="application/xml")
     
-    response = await register_message_on_db(incoming_que,bot_state,id)
+    response = await register_message_on_db(incoming_que,ai,bot_state,from_number,database,id)
     message.body(response)
     return Response(content=str(bot_response), media_type="application/xml")

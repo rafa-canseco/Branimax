@@ -10,20 +10,20 @@ import json
 state = BotState()
 
 async def register_message_on_db(body: str,ai:AIClass, state: BotState , from_number:str,database:str,id):
-    handle_history({"role":"user", "content":body}, state)
-    state_dict ,history , history_persistent = get_state(from_number,database)
+    handle_history({"role": "user", "content": body}, state)
 
-    if isinstance(state_dict,str):
+    state_dict, history, history_persistent = get_state(from_number, database)
+    if isinstance(state_dict, str):
         state_dict = json.loads(state_dict)
-    if isinstance(history,str):
-        history = json.loads(history)
+    if isinstance(history, str):
+        history = history
     if isinstance(history_persistent, str):
         history_persistent = json.loads(history_persistent)
 
     state.update(state_dict)
     handle_history({"role": "user", "content": body},state)
 
-    response = await mainMessaging(state,ai,id=id)
+    response = await mainMessaging(state,ai,body=body,from_number=from_number,id=id)
     history_persistent.append({"role": "user","content": body})
     history_persistent.append({"role": "assitant", "content": response})
 

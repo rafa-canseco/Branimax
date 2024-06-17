@@ -192,6 +192,13 @@ def get_talk_prompt(id):
     print(template)
     return template
 
+def get_discriminator_prompt(id):
+    template_supabase = supabase.table("prompts_advanced_bot").select("discriminator_prompt").eq("id_company",id).execute()
+    if not template_supabase.data:
+        raise ValueError("Prompt not setted")
+    template = template_supabase.data[0]['discriminator_prompt']
+    return template
+
 
 def update_state(from_number, state, history, history_persistent,database):
     state = datetime_to_str(state)
