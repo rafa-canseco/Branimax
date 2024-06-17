@@ -79,3 +79,5 @@ class AIClass:
             print(e)
             return {"date": ''}
 
+
+

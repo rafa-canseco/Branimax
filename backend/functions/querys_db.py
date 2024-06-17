@@ -183,6 +183,22 @@ def get_state(from_number,database):
         # Si el número no existe, crearlo
         supabase.table(database).insert({'from_number': from_number, 'state': '{}', 'history': '[]', 'history_persistent': '[]'}).execute()
         return {}, [], []
+    
+def get_talk_prompt(id):
+    template_supabase = supabase.table("prompts_advanced_bot").select("prompt_hablar").eq("id_company",id).execute()
+    if not template_supabase.data:
+        raise ValueError("Prompt not setted")
+    template = template_supabase.data[0]['prompt_hablar']
+    print(template)
+    return template
+
+def get_discriminator_prompt(id):
+    template_supabase = supabase.table("prompts_advanced_bot").select("discriminator_prompt").eq("id_company",id).execute()
+    if not template_supabase.data:
+        raise ValueError("Prompt not setted")
+    template = template_supabase.data[0]['discriminator_prompt']
+    return template
+
 
 def update_state(from_number, state, history, history_persistent,database):
     state = datetime_to_str(state)
@@ -232,3 +248,4 @@ def retrieveContext():
         query_name="match_documents",
         )
         return vector_store
+
