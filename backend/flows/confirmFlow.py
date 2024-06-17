@@ -5,7 +5,7 @@ from dateutil.parser import parse
 import pytz
 
 
-DURATION_MEET = 45
+DURATION_MEET = 60
 TIMEZONE = "Etc/GMT+6"  # GMT-6
 
 async def flow_confirm(state, ai, body, from_number):

@@ -199,6 +199,13 @@ def get_discriminator_prompt(id):
     template = template_supabase.data[0]['discriminator_prompt']
     return template
 
+def get_calendar_prompt(id):
+    template_supabase = supabase.table("prompts_advanced_bot").select("prompt_calendar").eq("id_company",id).execute()
+    if not template_supabase.data:
+        raise ValueError("Prompt not setted")
+    template = template_supabase.data[0]['prompt_calendar']
+    return template
+
 
 def update_state(from_number, state, history, history_persistent,database):
     state = datetime_to_str(state)
