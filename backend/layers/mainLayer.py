@@ -20,6 +20,7 @@ async def mainMessaging(state: BotState, ai: AIClass, body: str,from_number,id):
 
     history = get_history_parse(state)
     PROMPT_DISCRIMINATOR = get_discriminator_prompt(id)
+
     prompt = PROMPT_DISCRIMINATOR.replace('{HISTORY}', history)
 
     prediction = await ai.determine_chat_fn([
@@ -30,7 +31,7 @@ async def mainMessaging(state: BotState, ai: AIClass, body: str,from_number,id):
         response = sellerFlow(body, state,id)
         return response
     elif "RESERVAR" in prediction.get("prediction", ""):
-        response = await flow_schedule(state, ai, body)
+        response = await flow_schedule(state, ai, body,id)
         if "¿Confirmo tu reserva?" in response:
             state.update({'confirmation_phase': True})
             print("confirmation_phase actualizado a True")
@@ -41,7 +42,6 @@ async def register_message_and_process(body: str, state: BotState, ai: AIClass, 
     
     # Obtener el estado y el historial desde la base de datos
     state_dict, history, history_persistent = get_state(from_number,database)
-    
     # Asegurarse de que state_dict sea un diccionario
     if isinstance(state_dict, str):
         state_dict = json.loads(state_dict)
@@ -56,7 +56,7 @@ async def register_message_and_process(body: str, state: BotState, ai: AIClass, 
     if not state.get('has_interacted'):
         welcome_message = "Hola! 👋 Soy Lina, tu asistente virtual 🤖. ¿En qué puedo ayudarte hoy? 😊✨"
         state.update({'has_interacted': True})
-        update_state(from_number, state.state, get_history(state), history_persistent)
+        update_state(from_number, state.state, get_history(state), history_persistent,database)
         return welcome_message
     
     response = await mainMessaging(state, ai, body, from_number,id)
@@ -66,6 +66,6 @@ async def register_message_and_process(body: str, state: BotState, ai: AIClass, 
     history_persistent.append({'role': 'assistant', 'content': response})
     
     # Guardar el estado y el historial actualizado en la base de datos
-    update_state(from_number, state.state, get_history(state), history_persistent)
+    update_state(from_number, state.state, get_history(state), history_persistent,database)
     
     return response

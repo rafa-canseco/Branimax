@@ -6,12 +6,17 @@ import pytz
 
 load_dotenv()
 
-MAKE_GET_FROM_CALENDAR = os.environ.get("MAKE_GET_FROM_CALENDAR")
-MAKE_ADD_TO_CALENDAR = os.environ.get("MAKE_ADD_TO_CALENDAR")
+MAKE_GET_FROM_CALENDAR_19 = os.environ.get("MAKE_GET_FROM_CALENDAR_19")
+MAKE_ADD_TO_CALENDAR_19 = os.environ.get("MAKE_ADD_TO_CALENDAR_19")
 TIMEZONE = "Etc/GMT+6"  # GMT-6
 
-def get_current_calendar():
-    response = requests.get(MAKE_GET_FROM_CALENDAR)
+def get_current_calendar(id):
+    if id == 19:
+        make_get_from_calendar = MAKE_GET_FROM_CALENDAR_19
+    else:
+        make_get_from_calendar = os.environ.get(f"MAKE_GET_FROM_CALENDAR_{id}")
+
+    response = requests.get(make_get_from_calendar)
     response.raise_for_status()
     json_data = response.json()
     list_ = [item['date'] for item in json_data if item.get('date') and item.get('name')]
@@ -29,6 +34,6 @@ async def add_to_calendar(payload):
         # Format the date with timezone offset in RFC3339 format
         payload['date'] = local_dt.isoformat()
 
-    response = requests.post(MAKE_ADD_TO_CALENDAR, json=payload, headers=headers)
+    response = requests.post(MAKE_ADD_TO_CALENDAR_19, json=payload, headers=headers)
     response.raise_for_status()
     return response

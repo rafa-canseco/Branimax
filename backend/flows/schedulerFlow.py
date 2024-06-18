@@ -1,30 +1,21 @@
 from utils.currentDate import get_full_current_date
 from utils.history import get_history_parse, handle_history
 from services.getCalendar import get_current_calendar
+from functions.querys_db import get_calendar_prompt
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 from services.aiService import AIClass
 from dateutil.relativedelta import relativedelta
 import pytz
 
-PROMPT_FILTER_DATE = """
-### Contexto
-Eres un asistente de inteligencia artificial. Tu propósito es determinar la fecha y hora que el cliente quiere, en el formato yyyy/MM/dd HH:mm:ss.
 
-### Fecha y Hora Actual:
-{CURRENT_DAY}
 
-### Registro de Conversación:
-{HISTORY}
-
-Asistente: "{respuesta en formato (yyyy/MM/dd HH:mm:ss)}"
-"""
-
-DURATION_MEET = 45
+DURATION_MEET = 60
 TIMEZONE = "Etc/GMT+6"  # GMT-6
 
-def generate_prompt_filter(history) -> str:
+def generate_prompt_filter(history,id) -> str:
     now_date = get_full_current_date()
+    PROMPT_FILTER_DATE = get_calendar_prompt(id)
     main_prompt = PROMPT_FILTER_DATE.replace('{HISTORY}', history).replace('{CURRENT_DAY}', now_date)
     return main_prompt
 
@@ -39,11 +30,10 @@ def is_within_interval(date, start, end):
     
     return start <= date <= end
 
-async def flow_schedule(state, ai: AIClass, body):
-
+async def flow_schedule(state, ai: AIClass, body,id):
 
     history = get_history_parse(state)
-    list_ = get_current_calendar()
+    list_ = get_current_calendar(id)
 
 
     # Normalizar las fechas en list_ al mismo formato y zona horaria
@@ -59,7 +49,7 @@ async def flow_schedule(state, ai: AIClass, body):
         except Exception as e:
             print(f"Error parsing date {d}: {e}")
 
-    prompt_filter = generate_prompt_filter(history)
+    prompt_filter = generate_prompt_filter(history,id)
     response = await ai.desired_date_fn([{'role': 'system', 'content': prompt_filter}])
     
     desired_date = parse(response['date'])
