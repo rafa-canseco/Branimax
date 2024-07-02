@@ -577,11 +577,11 @@ async def serve_avatar(data:dict):
 
 @app.post("/whatsapp_calendar")
 async def message(request: Request):
-    id = 19
+    id = 15
     form_data = await request.form()
     incoming_que = form_data.get('Body', '').lower()
     from_number = form_data.get('From')
-    database= "cartesianodb"
+    database= "restaurantsdb"
     print(f"Mensaje recibido de {from_number}: {incoming_que}")
     
     bot_response = MessagingResponse()

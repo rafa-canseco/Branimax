@@ -172,7 +172,7 @@ def generate_tweet_url(prompt, topic, hashtag,url):
 
 def generateEmbeddigs():
     try:
-        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'cartesiano.pdf')
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'laEncomienda.pdf')
 
         loader = PyPDFLoader(pdf)
         documents = loader.load()
@@ -183,14 +183,13 @@ def generateEmbeddigs():
             docs,
             embeddings,
             client=supabase,
-            table_name="documents_cartesiano",
+            table_name="documentsrestaurants",
             # query_name="match_documents",
             chunk_size=500,
         )
         print("Embeddings creados y guardados exitosamente")
     except Exception as e:
         print(f"Error al crear embeddings: {e}")
-
 
 def retrieveContext():
     vector_store = SupabaseVectorStore(
@@ -200,6 +199,14 @@ def retrieveContext():
         query_name="match_documents",
     )
     return vector_store
+
+def retrieveContextRestaurants():
+    vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documentsrestaurants",
+        query_name="match_documents_new",
+    )
 
 def retrieveContextCartesianoSpa():
     vector_store = SupabaseVectorStore(
@@ -225,6 +232,8 @@ def get_chat_response_vectorized(message_input, id, template):
         context = retrieveContextAlcazar()
     elif id == 19:
         context = retrieveContextCartesianoSpa()
+    elif id == 15:
+        context = retrieveContextRestaurants()
     else:
         context = retrieveContext()
     
