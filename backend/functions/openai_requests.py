@@ -204,9 +204,10 @@ def retrieveContextRestaurants():
     vector_store = SupabaseVectorStore(
         embedding=embeddings,
         client=supabase,
-        table_name="documentsrestaurants",
+        table_name="documents_restaurants",
         query_name="match_documents_new",
     )
+    return vector_store
 
 def retrieveContextCartesianoSpa():
     vector_store = SupabaseVectorStore(
