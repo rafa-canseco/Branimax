@@ -11,7 +11,7 @@ MAKE_ADD_TO_CALENDAR_19 = os.environ.get("MAKE_ADD_TO_CALENDAR_19")
 TIMEZONE = "Etc/GMT+6"  # GMT-6
 
 def get_current_calendar(id):
-    if id == 19:
+    if id == 15:
         make_get_from_calendar = MAKE_GET_FROM_CALENDAR_19
     else:
         make_get_from_calendar = os.environ.get(f"MAKE_GET_FROM_CALENDAR_{id}")
