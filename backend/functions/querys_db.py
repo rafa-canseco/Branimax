@@ -256,3 +256,10 @@ def retrieveContext():
         )
         return vector_store
 
+
+def get_database_id(id):
+    name = supabase.table("databases_memory").select("name").eq("id_company",id).execute()
+    if not name.data:
+        raise ValueError("Prompt not setted")
+    name_database = name.data[0]['name']
+    return name_database

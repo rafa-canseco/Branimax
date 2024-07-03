@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote,get_chat_response_vectorized
 from functions.text_to_speech import convert_text_to_speech_whatsapp
 from functions.analisis import found_topics,scheme_topics,generate_question,get_resume_users,get_info_users
-from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state,getPromtByCompany
+from functions.querys_db import conversation_by_user,getCompanyId,getVoiceSource,getExactVoice,getSimilarity,getStyle,getStability,delete_state,getPromtByCompany,get_database_id
 from functions.openai_tts import speech_to_text_openai,convert_text_to_speech_multilingual
 from functions.tavus_requests import procesar_video,get_videos
 from twilio.twiml.messaging_response import Message, MessagingResponse
@@ -769,3 +769,60 @@ async def vanquish(request: Request):
     response = await register_message_on_db(incoming_que,ai,bot_state,from_number,database,id)
     message.body(response)
     return Response(content=str(bot_response), media_type="application/xml")
+
+### todo post audio/ post texto pero con memoria
+@app.post("post-texto-memory")
+async def post_texto_memory(data:dict):
+    incoming_que = data["question"]
+    id = data["id"]
+    from_number = data["user_number"]
+    database = get_database_id(id)
+    print(f"Mensaje recibido de {from_number}: {incoming_que}")
+
+    if incoming_que == "borrar":
+        delete_state(database,from_number)
+        response = "registro borrado"
+        return {"response": response}
+    
+    response = await register_message_on_db(incoming_que,ai,bot_state,from_number,database,id)
+    return {"response": response}
+
+@app.post("post-audio-memory")
+async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),user_number:str =Form(...)):
+    print("id identificado",id)
+    print("user_number",user_number)
+    database = get_database_id(id)
+
+    with open(file.filename, "wb") as buffer:
+        buffer.write(await file.read())
+    audio_input = open(file.filename, "rb")
+
+    message_decoded = convert_audio_to_text(audio_input)
+
+    if not message_decoded:
+        raise HTTPException(status_code=400, detail="Falló al decodificar audio")
+    
+    chat_response = await register_message_on_db(message_decoded,ai,bot_state,user_number,database,id)
+
+    if not chat_response:
+        raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+    print(chat_response)
+
+    companyId = getCompanyId(id)
+    voiceSource = getVoiceSource(companyId)
+    if voiceSource == "openai":
+        voice = getExactVoice(companyId)
+        audio_output = speech_to_text_openai(input_text=chat_response,voice=voice)
+    else:
+        voice = getExactVoice(companyId)
+        stability = getStability(companyId)
+        similarity =getSimilarity(companyId)
+        style = getStyle(companyId)
+        audio_output = convert_text_to_speech_multilingual(chat_response,voice,stability,similarity,style)
+
+    if not audio_output:
+        raise HTTPException(status_code=400, detail="Falló la salida de audio")
+    
+    def iterfile():
+        yield audio_output
+    return StreamingResponse(iterfile(), media_type="application/octet-stream")
