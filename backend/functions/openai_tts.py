@@ -25,8 +25,8 @@ def speech_to_text_openai(input_text,voice):
     end_time = time.time()
     print(f"Tiempo total de ejecución de OpenAI: {end_time - start_time} segundos")
     # Convertir el audio a formato wav
-    wav_data = convert_mp3_to_wav(response.content)
-    return wav_data
+    # wav_data = convert_mp3_to_wav(response.content)
+    return response.content
 
 
 

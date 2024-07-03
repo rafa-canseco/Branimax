@@ -770,7 +770,96 @@ async def vanquish(request: Request):
     message.body(response)
     return Response(content=str(bot_response), media_type="application/xml")
 
-### todo post audio/ post texto pero con memoria
+### todo: vanquish whatsApp con audio dinámico y texto
+
+@app.post("/whatsapp_calendar_v2")
+async def message_calendar(request: Request):
+    try:
+        form_data = await request.form()
+        from_number = form_data.get('From')
+        id = 15
+        database = get_database_id(id)
+        is_audio = "MediaContentType0" in form_data
+
+        if is_audio:
+            incoming_que = await process_audio(form_data)
+        else:
+            incoming_que = form_data.get('Body', '').lower()
+        
+        if not incoming_que:
+            return Response(content="Failed to process input", status_code=400)
+
+        if incoming_que == "borrar":
+            delete_state(database, from_number)
+            return create_response("registro borrado")
+
+        chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number, database, id)
+        
+        if not chat_response:
+            raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
+
+        if is_audio:
+            audio_output = await generate_audio_response(chat_response, id)
+            return await create_audio_response(chat_response, audio_output)
+        else:
+            return create_response(chat_response)
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return Response(content="Internal Server Error", status_code=500)
+
+async def process_audio(form_data):
+    media_url = form_data["MediaUrl0"]
+    response = requests.get(media_url)
+    
+    if response.status_code != 200:
+        return None
+
+    audio_oga_path = os.path.join(STATIC_DIR, "audio.oga")
+    audio_wav_path = os.path.join(STATIC_DIR, "audio.wav")
+
+    with open(audio_oga_path, "wb") as file:
+        file.write(response.content)
+
+    audio = AudioSegment.from_file(audio_oga_path, format="ogg")
+    audio.export(audio_wav_path, format="wav")
+
+    with open(audio_wav_path, "rb") as audio_file:
+        return convert_audio_to_text(audio_file)
+
+async def generate_audio_response(chat_response, id):
+    companyId = getCompanyId(id)
+    voiceSource = getVoiceSource(companyId)
+    voice = getExactVoice(companyId)
+
+    if voiceSource == "openai":
+        return speech_to_text_openai(input_text=chat_response, voice=voice)
+    else:
+        stability = getStability(companyId)
+        similarity = getSimilarity(companyId)
+        style = getStyle(companyId)
+        return convert_text_to_speech_multilingual(chat_response, voice, stability, similarity, style)
+
+def create_response(message):
+    response = MessagingResponse()
+    response.message(message)
+    return Response(content=str(response), media_type="application/xml")
+
+async def create_audio_response(chat_response, audio_output):
+    if not audio_output:
+        raise HTTPException(status_code=400, detail="Falló la salida de audio")
+    
+    audio_output_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+    with open(audio_output_path, "wb") as audio_file:
+        audio_file.write(audio_output)
+
+    response = MessagingResponse()
+    message = response.message(chat_response)
+    message.media('https://servidorscarlett.com/static/audio_response.mp3')
+
+    return Response(content=str(response), media_type="application/xml")
+
+
 @app.post("post-texto-memory")
 async def post_texto_memory(data:dict):
     incoming_que = data["question"]
