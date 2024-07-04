@@ -13,6 +13,11 @@ import requests
 from dotenv import load_dotenv
 from pydub import AudioSegment
 from pydantic import BaseModel
+from fastapi import BackgroundTasks
+from twilio.rest import Client
+import asyncio
+from twilio.base.exceptions import TwilioRestException
+import logging
 
 #Custom Function Imports
 from functions.openai_requests import convert_audio_to_text,get_chat_response,getResumeNote,get_chat_response_vectorized
@@ -31,6 +36,14 @@ from twitter.executions.Reply import single_response_preview ,respond_to_tweet
 from vanquish.mainLayerVanquish import register_message_on_db
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+twilio_account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+twilio_phone_number = os.environ.get("TWILIO_PHONE_NUMBER")
+
+client = Client(twilio_account_sid, twilio_auth_token)
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 bot_state =BotState()
@@ -772,6 +785,97 @@ async def vanquish(request: Request):
 
 ### todo: vanquish whatsApp con audio dinámico y texto
 
+async def process_message_and_send(incoming_que, from_number, id, database, is_audio):
+    try:
+        if incoming_que == "borrar":
+            delete_state(database, from_number)
+            response_text = "registro borrado"
+        else:
+            chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number, database, id)
+            
+            if not chat_response:
+                response_text = "Falló la respuesta del chat"
+            else:
+                response_text = chat_response
+
+        # Asegúrate de que el número de Twilio tenga el prefijo "whatsapp:"
+        twilio_whatsapp_number = f"whatsapp:{twilio_phone_number}" if not twilio_phone_number.startswith("whatsapp:") else twilio_phone_number
+
+        logger.info(f"Twilio WhatsApp number: {twilio_whatsapp_number}")
+        logger.info(f"To number: {from_number}")
+        logger.info(f"Response text: {response_text}")
+
+        try:
+            if is_audio:
+                audio_output = await generate_audio_response(response_text, id)
+                audio_output_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+                with open(audio_output_path, "wb") as audio_file:
+                    audio_file.write(audio_output)
+                
+                message = client.messages.create(
+                    body=response_text,
+                    from_=twilio_whatsapp_number,
+                    to=from_number,
+                    media_url=['https://servidorscarlett.com/static/audio_response.mp3']
+                )
+            else:
+                message = client.messages.create(
+                    body=response_text,
+                    from_=twilio_whatsapp_number,
+                    to=from_number
+                )
+            
+            logger.info(f"Message sent successfully. SID: {message.sid}")
+        except TwilioRestException as e:
+            logger.error(f"Twilio error: {e.code} - {e.msg}")
+            logger.error(f"Twilio error details: {e.details}")
+            raise
+    except Exception as e:
+        logger.error(f"Error en el procesamiento asíncrono: {str(e)}")
+        raise
+
+import json
+
+@app.post("/send_pending_message")
+async def send_pending_message(request: Request):
+    try:
+        form_data = await request.form()
+        from_number = form_data.get('From')
+        
+        # Intentar cargar el mensaje pendiente
+        try:
+            with open(os.path.join(STATIC_DIR, f"pending_message_{from_number}.json"), "r") as f:
+                pending_message = json.load(f)
+        except FileNotFoundError:
+            return Response(content="No pending message found", status_code=404)
+
+        # Enviar el mensaje pendiente
+        twilio_whatsapp_number = f"whatsapp:{twilio_phone_number}"
+        if pending_message["is_audio"]:
+            message = client.messages.create(
+                body=pending_message["body"],
+                from_=twilio_whatsapp_number,
+                to=pending_message["to"],
+                media_url=[f'https://servidorscarlett.com/static/audio_response.mp3']
+            )
+        else:
+            message = client.messages.create(
+                body=pending_message["body"],
+                from_=twilio_whatsapp_number,
+                to=pending_message["to"]
+            )
+
+        logger.info(f"Pending message sent successfully. SID: {message.sid}")
+
+        # Eliminar el archivo del mensaje pendiente
+        os.remove(os.path.join(STATIC_DIR, f"pending_message_{from_number}.json"))
+
+        return Response(content="Pending message sent successfully", status_code=200)
+
+    except Exception as e:
+        logger.error(f"Error sending pending message: {str(e)}")
+        return Response(content="Error sending pending message", status_code=500)
+
 @app.post("/whatsapp_calendar_v2")
 async def message_calendar(request: Request):
     try:
@@ -785,7 +889,7 @@ async def message_calendar(request: Request):
             incoming_que = await process_audio(form_data)
         else:
             incoming_que = form_data.get('Body', '').lower()
-        
+
         if not incoming_que:
             return Response(content="Failed to process input", status_code=400)
 
@@ -794,20 +898,81 @@ async def message_calendar(request: Request):
             return create_response("registro borrado")
 
         chat_response = await register_message_and_process(incoming_que, bot_state, ai, from_number, database, id)
-        
+
         if not chat_response:
             raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
 
         if is_audio:
             audio_output = await generate_audio_response(chat_response, id)
+            # Guardar información del mensaje pendiente
+            pending_message = {
+                "to": from_number,
+                "body": chat_response,
+                "is_audio": True,
+                "audio_path": os.path.join(STATIC_DIR, "audio_response.mp3")
+            }
+            with open(os.path.join(STATIC_DIR, f"pending_message_{from_number}.json"), "w") as f:
+                json.dump(pending_message, f)
             return await create_audio_response(chat_response, audio_output)
         else:
+            # Guardar información del mensaje pendiente
+            pending_message = {
+                "to": from_number,
+                "body": chat_response,
+                "is_audio": False
+            }
+            with open(os.path.join(STATIC_DIR, f"pending_message_{from_number}.json"), "w") as f:
+                json.dump(pending_message, f)
             return create_response(chat_response)
 
     except Exception as e:
-        print(f"Error: {str(e)}")
+        logger.error(f"Error: {str(e)}")
         return Response(content="Internal Server Error", status_code=500)
 
+@app.post("/send_whatsapp_message")
+async def send_whatsapp_message(request: Request):
+    try:
+        data = await request.json()
+        response_text = data.get('response')
+        to_number = data.get('to')
+        is_audio = data.get('is_audio', False)
+
+        # Asegúrate de que el número de Twilio tenga el prefijo "whatsapp:"
+        twilio_whatsapp_number = f"whatsapp:{twilio_phone_number}" if not twilio_phone_number.startswith("whatsapp:") else twilio_phone_number
+
+        logger.info(f"Twilio WhatsApp number: {twilio_whatsapp_number}")
+        logger.info(f"To number: {to_number}")
+        logger.info(f"Response text: {response_text}")
+
+        try:
+            if is_audio:
+                audio_output = await generate_audio_response(response_text, id)
+                audio_output_path = os.path.join(STATIC_DIR, "audio_response.mp3")
+                with open(audio_output_path, "wb") as audio_file:
+                    audio_file.write(audio_output)
+                
+                message = client.messages.create(
+                    body=response_text,
+                    from_=twilio_whatsapp_number,
+                    to=to_number,
+                    media_url=['https://servidorscarlett.com/static/audio_response.mp3']
+                )
+            else:
+                message = client.messages.create(
+                    body=response_text,
+                    from_=twilio_whatsapp_number,
+                    to=to_number
+                )
+            
+            logger.info(f"Message sent successfully. SID: {message.sid}")
+            return JSONResponse(content={"success": True, "message_sid": message.sid})
+        except TwilioRestException as e:
+            logger.error(f"Twilio error: {e.code} - {e.msg}")
+            logger.error(f"Twilio error details: {e.details}")
+            return JSONResponse(content={"error": str(e)}, status_code=400)
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
+        return JSONResponse(content={"error": "Internal Server Error"}, status_code=500)
 async def process_audio(form_data):
     media_url = form_data["MediaUrl0"]
     response = requests.get(media_url)
