@@ -45,8 +45,7 @@ client = Client(twilio_account_sid, twilio_auth_token)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-bot_state =BotState()
+bot_state = BotState()
 api_key =os.environ.get("OPENAI_API_KEY")
 ai = AIClass(api_key=api_key, model="gpt-4o")
 aiPromuevo = AIClassPromuevo(api_key=api_key, model="gpt-4o")
@@ -664,7 +663,7 @@ async def message(data:dict):
         response = "proceso Reiniciado"
         return {"response": response}
     
-    response = await register_message_and_process_promuevo(incoming_que,bot_state,aiPromuevo,user_id,database)
+    response = await register_message_and_process_promuevo(incoming_que,aiPromuevo,user_id,database)
     
     return {"response": response}
 

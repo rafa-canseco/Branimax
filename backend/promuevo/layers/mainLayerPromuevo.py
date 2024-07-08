@@ -32,7 +32,7 @@ Por favor, clasifica la siguiente conversación según la intención del usuario
 
 
 async def register_message_and_process_promuevo(
-    body: str, state: BotState, ai: AIClassPromuevo, from_number: str, database: str
+    body: str,  ai: AIClassPromuevo, from_number: str, database: str
 ):
     handle_history({"role": "user", "content": body}, state)
 
