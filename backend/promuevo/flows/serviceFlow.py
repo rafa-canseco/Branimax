@@ -36,17 +36,17 @@ async def serviceIdentifier(state, ai: AIClassPromuevo):
     service = prediction.get("prediction", "")
 
     if "Promotoría" in service:
-        url = "https://2promuevo.vercel.app/promotoria"
+        url = "https://promuevo.mx/promotoria"
     elif "Degustación & Demostración" in service:
-        url = "https://2promuevo.vercel.app/degustacion&demostrac"
+        url = "https://promuevo.mx/degustacion-demostracion"
     elif "Software de Gestión en PDV" in service:
-        url = "https://2promuevo.vercel.app/software"
+        url = "https://promuevo.mx/software-pdv"
     elif "Trademarketing" in service:
-        url = "https://2promuevo.vercel.app/trademarketing"
+        url = "https://promuevo.mx/trademarketing"
     elif "Gestión de herramientas" in service:
-        url = "https://2promuevo.vercel.app/gestion"
+        url = "https://promuevo.mx/gestion-herramientas"
     elif "Investigación del consumidor" in service:
-        url = "https://2promuevo.vercel.app/investigacion"
+        url = "https://promuevo.mx/investigacion-comprador"
     else:
         response = (
             "Nuestros servicios son:\n"

@@ -172,7 +172,7 @@ def generate_tweet_url(prompt, topic, hashtag,url):
 
 def generateEmbeddigs():
     try:
-        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'laEncomienda.pdf')
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'encomienda.pdf')
 
         loader = PyPDFLoader(pdf)
         documents = loader.load()
@@ -183,7 +183,7 @@ def generateEmbeddigs():
             docs,
             embeddings,
             client=supabase,
-            table_name="documentsrestaurants",
+            table_name="documents_restaurants",
             # query_name="match_documents",
             chunk_size=500,
         )
@@ -244,3 +244,4 @@ def get_chat_response_vectorized(message_input, id, template):
     qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever, return_source_documents=False, chain_type_kwargs={"prompt": customPrompt})
     response = qa.invoke({"query": message_input})
     return response["result"]
+
