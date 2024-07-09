@@ -56,7 +56,7 @@ async def serviceIdentifier(state, ai: AIClassPromuevo):
             "4. Trademarketing\n"
             "5. Gestión de herramientas\n"
             "6. Investigación del consumidor\n"
-            "Entra a la siguiente liga para más información: https://2promuevo.vercel.app/servicio"
+            "Entra a la siguiente liga para más información: https://promuevo.mx/servicios"
         )
         return response
 
