@@ -654,16 +654,16 @@ async def message(request: Request):
 async def message(data:dict):
     incoming_que= data["question"]
     id = data["id"]
+    print(id)
     user_id =data["user_id"]
-    database = "promuevodb"
-    print(incoming_que)
+    database = get_database_id(id)
 
-    if incoming_que == "reiniciar":
+    if incoming_que == "borrar":
         delete_state(database,user_id)
         response = "proceso Reiniciado"
         return {"response": response}
     
-    response = await register_message_and_process_promuevo(incoming_que,aiPromuevo,user_id,database)
+    response = await register_message_and_process_promuevo(incoming_que,aiPromuevo,user_id,database,id)
     
     return {"response": response}
 
