@@ -1024,7 +1024,7 @@ async def create_audio_response(chat_response, audio_output):
     return Response(content=str(response), media_type="application/xml")
 
 
-@app.post("post-texto-memory")
+@app.post("/post-texto-memory")
 async def post_texto_memory(data:dict):
     incoming_que = data["question"]
     id = data["id"]
@@ -1040,7 +1040,7 @@ async def post_texto_memory(data:dict):
     response = await register_message_on_db(incoming_que,ai,bot_state,from_number,database,id)
     return {"response": response}
 
-@app.post("post-audio-memory")
+@app.post("/post-audio-memory")
 async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),user_number:str =Form(...)):
     print("id identificado",id)
     print("user_number",user_number)
