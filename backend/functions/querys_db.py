@@ -172,6 +172,8 @@ def str_to_datetime(state):
 
 
 def get_state(from_number,database):
+    print(f"Database: {repr(database)}")
+    print(f"From number: {repr(from_number)}")
     response = supabase.table(database).select('*').eq('from_number', from_number).execute()
     if response.data:
         state_dict = json.loads(response.data[0]['state'])
@@ -261,5 +263,6 @@ def get_database_id(id):
     name = supabase.table("databases_memory").select("name").eq("id_company",id).execute()
     if not name.data:
         raise ValueError("Prompt not setted")
-    name_database = name.data[0]['name']
+    name_database = name.data[0]['name'].strip()  # Usamos strip() para eliminar espacios y saltos de línea
+    print(f"Database name retrieved: {repr(name_database)}")  # Añadimos un print para depuración
     return name_database
