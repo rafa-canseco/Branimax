@@ -51,6 +51,9 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
     print(f"Estado actual de recruitment_phase: {state.get('recruitment_phase')}")
     if state.get("recruitment_phase"):
         response = await flow_recruit(state, body,from_number)
+        if not state.get("recruitment_phase"):
+            # Si ha terminado, actualizamos el estado global
+            state.update({'recruitment_phase': False})
         return response
 
     history = get_history_parse(state)
@@ -72,7 +75,7 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
 
                         ¡Esperamos hablar contigo pronto!"""
         return response
-    if "RECLUTAR" in prediction.get("prediction", ""):
+    if "TRABAJAR" in prediction.get("prediction", ""):
         response = await flow_recruit(state,body,from_number)
         return response
 

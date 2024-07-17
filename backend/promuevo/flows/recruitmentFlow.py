@@ -39,8 +39,6 @@ async def flow_recruit(state,body,from_number):
         return "¿Cuál es tu email? 📧"
     
     if not state.get('email'):
-        if '@' not in body:
-            return "Por favor, ingresa un email válido 📧❗"
         state.update({'email': body})
         return "¿Cuál es tu teléfono? 📞"
     
@@ -72,7 +70,6 @@ async def flow_recruit(state,body,from_number):
         
         return response
     
-    return "Ok, voy a pedirte unos datos. ¿Cuál es tu nombre? 😊📝"
 
 
 

@@ -26,7 +26,7 @@ class AIClassPromuevo:
                                 "prediction": {
                                     "type": "string",
                                     "description": "The predicted user intention.",
-                                    "enum": ["RESERVAR", "HABLAR","RECLUTAR"]
+                                    "enum": ["RESERVAR", "HABLAR","TRABAJAR"]
                                 }
                             },
                             "required": ["prediction"]
