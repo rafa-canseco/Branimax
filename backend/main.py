@@ -349,35 +349,38 @@ async def post_audio_new(file: UploadFile = File(...),  id: str = Form(...)):
     return StreamingResponse(iterfile(), media_type="application/octet-stream")
 
 
-@app.post("/signup")
+@app.post("/signup_vanquish")
 async def signup(data: dict):
-    email = data.get("email")
-    id_company = data.get("id_company")
-    
-    if not email or not id_company:
-        raise HTTPException(status_code=400, detail="Email or company ID missing.")
-
+    firstName = data["first_name"]
+    birthdate = data["birthdate"]
+    phoneNumber = data["phoneNumber"]
+    email = data["email"]
+    password = data["password"]
     try:
-        response = supabase.auth.sign_up(data)
+        response = supabase.auth.sign_up(credentials={"email": email, "phone": phoneNumber, "password": password})
     except AuthApiError as error:
-        print("Error during registration:", str(error))
+        print("Error durante el registro:", str(error))
         raise HTTPException(status_code=400, detail=str(error))
 
-
     try:
-        supabase.table("Users").insert({"Email": email, "id_company": id_company}).execute()
+        supabase.table("users_vanquishdb").insert({
+            "firstname": firstName,
+            "birthdate": birthdate,
+            "phoneNumber": phoneNumber,
+            "email": email
+        }).execute()
     except Exception as e:
-        print("Error inserting user:", str(e))
-        raise HTTPException(status_code=500, detail="Failed to insert user into database.")
+        print("Error al insertar usuario en la base de datos:", str(e))
+        raise HTTPException(status_code=500, detail="Fallo al insertar usuario en la base de datos.")
     
     return response
 
-@app.post("/login")
+@app.post("/login_vanquish")
 async def login(data:dict):
-    session = supabase.auth.sign_in_with_password(data)
-    print(session)
-    access_token = session.session.access_token
-    print(access_token)
+    email = data["email"]
+    password = data["password"]
+    data = supabase.auth.sign_in_with_password({"email": email, "password": password})
+    access_token = data.session.access_token
     return access_token
 
 
