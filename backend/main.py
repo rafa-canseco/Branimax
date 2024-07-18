@@ -1031,7 +1031,7 @@ async def create_audio_response(chat_response, audio_output):
 async def post_texto_memory(data:dict):
     incoming_que = data["question"]
     id = data["id"]
-    from_number = data["user_number"]
+    from_number = data["user_email"]
     database = get_database_id(id)
     print(f"Mensaje recibido de {from_number}: {incoming_que}")
 
@@ -1044,9 +1044,9 @@ async def post_texto_memory(data:dict):
     return {"response": response}
 
 @app.post("/post-audio-memory")
-async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),user_number:str =Form(...)):
+async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),user_email:str =Form(...)):
     print("id identificado",id)
-    print("user_number",user_number)
+    print("user_number",user_email)
     database = get_database_id(id)
 
     with open(file.filename, "wb") as buffer:
@@ -1058,7 +1058,7 @@ async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),use
     if not message_decoded:
         raise HTTPException(status_code=400, detail="Falló al decodificar audio")
     
-    chat_response = await register_message_on_db(message_decoded,ai,bot_state,user_number,database,id)
+    chat_response = await register_message_on_db(message_decoded,ai,bot_state,user_email,database,id)
 
     if not chat_response:
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
