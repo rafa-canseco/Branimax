@@ -36,7 +36,7 @@ async def register_message_and_process_promuevo(body: str, ai: AIClassPromuevo, 
         update_state(from_number, state.state, get_history(state), history_persistent,database)
         return welcome_message
 
-    response = await mainMessaging(state, ai, body, from_number,id)
+    response = await mainMessaging(state, ai, body, from_number,id,database)
 
     history_persistent.append({"role": "user", "content": body})
     history_persistent.append({"role": "assitant", "content": response})
@@ -46,11 +46,11 @@ async def register_message_and_process_promuevo(body: str, ai: AIClassPromuevo, 
     return response
 
 
-async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_number,id):
+async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_number,id,database):
 
     print(f"Estado actual de recruitment_phase: {state.get('recruitment_phase')}")
     if state.get("recruitment_phase"):
-        response = await flow_recruit(state, body, from_number)
+        response = await flow_recruit(state, body, from_number,database)
         return response
 
     history = get_history_parse(state)

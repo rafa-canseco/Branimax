@@ -1,8 +1,9 @@
 from promuevo.utilsPromuvo.historyPromuevo import clear_history
 from promuevo.services.spreadsheet import write_lead
+from functions.querys_db import delete_state
 
 
-async def flow_recruit(state,body,from_number):
+async def flow_recruit(state,body,from_number,database):
     if not state.get('recruitment_phase'):
         state.update({'recruitment_phase': True})
 
@@ -63,14 +64,14 @@ async def flow_recruit(state,body,from_number):
         )
         await write_lead(date_object)
         
-        recruitment_keys = ['recruitment_phase', 'name', 'age', 'city', 'education_level', 'desired_position', 'email', 'phone', 'name_prompted']
-        for key in recruitment_keys:
-            state.state.pop(key, None)
+        state.state.clear()
         
-        state.update({'recruitment_phase': False})
-        clear_history(state)
+        # Eliminar el estado de la base de datos
+        delete_state(database, from_number)
         
         return response
+
+    return "Lo siento, ha ocurrido un error en el proceso de reclutamiento. ¿En qué más puedo ayudarte?"
     
 
 
