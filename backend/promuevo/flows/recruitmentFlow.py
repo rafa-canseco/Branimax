@@ -66,7 +66,7 @@ async def flow_recruit(state,body,from_number,database):
         
         state.state.clear()
         
-        # Eliminar el estado de la base de datos
+
         delete_state(database, from_number)
         
         return response
