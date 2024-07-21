@@ -52,7 +52,6 @@ async def flow_recruit(state,body,from_number):
             'email': state.get('email'),
             'phone': state.get('phone')
         }
-        server =await write_lead(date_object)
         response = ( 
             f"¡Gracias {state.get('name')}! Hemos recibido tus datos:"
             f"Edad: {state.get('age')}"
@@ -62,6 +61,7 @@ async def flow_recruit(state,body,from_number):
             f"Email: {state.get('email')}"
             f"Teléfono: {state.get('phone')}"
         )
+        await write_lead(date_object)
         
         clear_history(state)
         state.update({'recruitment_phase': False})
