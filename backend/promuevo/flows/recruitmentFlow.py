@@ -7,10 +7,9 @@ async def flow_recruit(state,body,from_number,database):
     if not state.get('recruitment_phase'):
         state.update({'recruitment_phase': True})
 
+
     if "cancelar" in body.lower():
-        clear_history(state)
-        state.update({'recruitment_phase': False})
-        return "¿Cómo puedo ayudarte? 😊"
+        return reset_recruitment_state(state, database, from_number)
     
     if not state.get('name'):
         if not state.get('name_prompted'):
@@ -64,10 +63,7 @@ async def flow_recruit(state,body,from_number,database):
         )
         await write_lead(date_object)
         
-        state.state.clear()
-        
-
-        delete_state(database, from_number)
+        reset_recruitment_state(state, database, from_number)
         
         return response
 
@@ -75,4 +71,9 @@ async def flow_recruit(state,body,from_number,database):
     
 
 
-
+def reset_recruitment_state(state, database, from_number):
+    state.state.clear()
+    state.update({'recruitment_phase': False, 'has_interacted': True})
+    clear_history(state)
+    delete_state(database, from_number)
+    return "Proceso de reclutamiento finalizado. ¿En qué más puedo ayudarte?"
