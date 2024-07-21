@@ -33,8 +33,6 @@ async def flow_recruit(state,body,from_number):
         return "¿Cuál es el puesto deseado? (demovendedor, demostrador, promotor) 🏢"
     
     if not state.get('desired_position'):
-        if body.lower() not in ['demovendedor','demostrador','promotor']:
-            return "Por favor, elige una opción válida: demovendedor,demostrador, promotor 🏢"
         state.update({'desired_position': body})
         return "¿Cuál es tu email? 📧"
     
