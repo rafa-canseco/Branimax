@@ -63,8 +63,11 @@ async def flow_recruit(state,body,from_number):
         )
         await write_lead(date_object)
         
+        recruitment_keys = ['recruitment_phase', 'name', 'age', 'city', 'education_level', 'desired_position', 'email', 'phone', 'name_prompted']
+        for key in recruitment_keys:
+            state.state.pop(key, None)
+        
         clear_history(state)
-        state.update({'recruitment_phase': False})
         
         return response
     
