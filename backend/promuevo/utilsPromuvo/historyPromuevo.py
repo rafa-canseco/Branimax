@@ -21,4 +21,4 @@ def get_history_parse(state: BotState, k: int = 15) -> str:
     )
 
 def clear_history(state: BotState):
-    state.clear()
+    state.update({'history': []})

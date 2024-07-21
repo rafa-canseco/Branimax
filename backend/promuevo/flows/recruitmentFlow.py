@@ -67,6 +67,7 @@ async def flow_recruit(state,body,from_number):
         for key in recruitment_keys:
             state.state.pop(key, None)
         
+        state.update({'recruitment_phase': False})
         clear_history(state)
         
         return response
