@@ -44,13 +44,13 @@ async def flow_recruit(state,body,from_number,database):
         state.update({'phone': body})
         
         date_object = {
-            'name': state.get('name'),
-            'age': state.get('age'),
-            'city': state.get('city'),
-            'education_level': state.get('education_level'),
-            'desired_position': state.get('desired_position'),
+            'nombre': state.get('name'),
+            'edad': state.get('age'),
+            'ciudad': state.get('city'),
+            'nivelEstudios': state.get('education_level'),
+            'puestoRequerido': state.get('desired_position'),
             'email': state.get('email'),
-            'phone': state.get('phone')
+            'telefono': state.get('phone')
         }
         response = ( 
             f"¡Gracias {state.get('name')}! Hemos recibido tus datos:"
