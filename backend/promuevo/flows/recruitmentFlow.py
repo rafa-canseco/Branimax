@@ -3,10 +3,7 @@ from promuevo.services.spreadsheet import write_lead
 from functions.querys_db import delete_state
 
 
-async def flow_recruit(state,body,from_number,database):
-    if not state.get('recruitment_phase'):
-        state.update({'recruitment_phase': True})
-
+async def flow_recruit(state, body, from_number, database):
     if "cancelar" in body.lower():
         return reset_recruitment_state(state, database, from_number)
     
@@ -15,20 +12,20 @@ async def flow_recruit(state,body,from_number,database):
             state.update({'name_prompted': True})
             return "Ok, voy a pedirte unos datos. ¿Cuál es tu nombre? 😊📝"
         else:
-            state.update({'name':body})
+            state.update({'name': body})
             state.update({'name_prompted': False})
-            return "cual es tu edad? 📝"
+            return "¿Cuál es tu edad? 📝"
         
     if not state.get('age'):
         state.update({'age': body})
         return "¿Cuál es tu ciudad de residencia? 🏙️"
     
     if not state.get('city'):
-        state.update({'city' : body})
+        state.update({'city': body})
         return "¿Cuál es tu nivel de estudios? 🎓"
     
     if not state.get('education_level'):
-        state.update({'education_level':body})
+        state.update({'education_level': body})
         return "¿Cuál es el puesto deseado? (demovendedor, demostrador, promotor) 🏢"
     
     if not state.get('desired_position'):
@@ -69,10 +66,9 @@ async def flow_recruit(state,body,from_number,database):
     return "Lo siento, ha ocurrido un error en el proceso de reclutamiento. ¿En qué más puedo ayudarte?"
     
 
-
 def reset_recruitment_state(state, database, from_number):
     state.state.clear()
-    state.update({'recruitment_phase': False, 'has_interacted': True})
+    state.update({'has_interacted': True, 'recruitment_phase': False})
     clear_history(state)
     delete_state(database, from_number)
     return "Proceso de reclutamiento finalizado. ¿En qué más puedo ayudarte?"

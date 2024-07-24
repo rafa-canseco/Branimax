@@ -69,7 +69,8 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
                         ¡Esperamos hablar contigo pronto!"""
         return response
     if "TRABAJAR" in prediction.get("prediction", ""):
-        response = await flow_recruit(state,body,from_number,database)
+        state.update({"recruitment_phase": True})
+        response = await flow_recruit(state, body, from_number, database)
         return response
 
     return
