@@ -9,6 +9,8 @@ from functions.querys_db import get_state, update_state, get_discriminator_promp
 from promuevo.flows.sellerFlow import sellerFlow
 from promuevo.flows.serviceFlow import serviceIdentifier
 from promuevo.flows.recruitmentFlow import flow_recruit
+from promuevo.utilsPromuvo.historyPromuevo import clear_history
+from functions.querys_db import delete_state
 import json
 
 
@@ -47,7 +49,10 @@ async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_nu
     if state.get("recruitment_phase"):
         response = await flow_recruit(state, body, from_number, database)
         if "Proceso de reclutamiento finalizado" in response:
-            state.update({'recruitment_phase': False})
+            state.state.clear()  # Limpia completamente el estado
+            state.update({'recruitment_phase': False, 'has_interacted': True})  # Reinicia las variables clave
+            clear_history(state)  # Limpia el historial
+            delete_state(database, from_number)  # Elimina el estado de la base de datos
         return response
 
     history = get_history_parse(state)
