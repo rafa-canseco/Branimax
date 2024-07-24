@@ -1,4 +1,4 @@
-from promuevo.utilsPromuevo.historyPromuevo import clear_history
+from promuevo.utilsPromuvo.historyPromuevo import clear_history
 from promuevo.services.spreadsheet import write_lead
 from functions.querys_db import delete_state
 
