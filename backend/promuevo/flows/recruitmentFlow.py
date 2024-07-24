@@ -63,9 +63,7 @@ async def flow_recruit(state,body,from_number,database):
         )
         await write_lead(date_object)
         
-        reset_recruitment_state(state, database, from_number)
-        
-        return response
+        return reset_recruitment_state(state, database, from_number)
 
     return "Lo siento, ha ocurrido un error en el proceso de reclutamiento. ¿En qué más puedo ayudarte?"
     
