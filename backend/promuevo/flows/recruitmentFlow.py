@@ -3,10 +3,11 @@ from promuevo.services.spreadsheet import write_lead
 from functions.querys_db import delete_state
 
 
-async def flow_recruit(state,body,from_number,database):
+async def flow_recruit(state, body, from_number, database):
     if not state.get('recruitment_phase'):
         state.update({'recruitment_phase': True})
-
+        state.state.clear()  # Limpia el estado al iniciar el flujo de reclutamiento
+        clear_history(state)  # Limpia el historial al iniciar el flujo de reclutamiento
 
     if "cancelar" in body.lower():
         return reset_recruitment_state(state, database, from_number)
@@ -53,25 +54,25 @@ async def flow_recruit(state,body,from_number,database):
             'telefono': state.get('phone')
         }
         response = ( 
-            f"¡Gracias {state.get('name')}! Hemos recibido tus datos:"
-            f"Edad: {state.get('age')}"
-            f"Ciudad: {state.get('city')}"
-            f"Nivel de estudios: {state.get('education_level')}"
-            f"Puesto deseado: {state.get('desired_position')}"
-            f"Email: {state.get('email')}"
-            f"Teléfono: {state.get('phone')}"
+            f"¡Gracias {state.get('name')}! Hemos recibido tus datos:\n"
+            f"Edad: {state.get('age')}\n"
+            f"Ciudad: {state.get('city')}\n"
+            f"Nivel de estudios: {state.get('education_level')}\n"
+            f"Puesto deseado: {state.get('desired_position')}\n"
+            f"Email: {state.get('email')}\n"
+            f"Teléfono: {state.get('phone')}\n\n"
+            "¿En qué más puedo ayudarte?"
         )
         await write_lead(date_object)
         
         return reset_recruitment_state(state, database, from_number)
 
     return "Lo siento, ha ocurrido un error en el proceso de reclutamiento. ¿En qué más puedo ayudarte?"
-    
 
 
 def reset_recruitment_state(state, database, from_number):
-    state.state.clear()
-    state.update({'recruitment_phase': False, 'has_interacted': True})
-    clear_history(state)
-    delete_state(database, from_number)
+    state.state.clear()  # Limpia completamente el estado
+    state.update({'recruitment_phase': False, 'has_interacted': True})  # Reinicia las variables clave
+    clear_history(state)  # Limpia el historial
+    delete_state(database, from_number)  # Elimina el estado de la base de datos
     return "Proceso de reclutamiento finalizado. ¿En qué más puedo ayudarte?"
