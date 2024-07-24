@@ -6,8 +6,8 @@ from functions.querys_db import delete_state
 async def flow_recruit(state, body, from_number, database):
     if not state.get('recruitment_phase'):
         state.update({'recruitment_phase': True})
-        state.state.clear()  # Limpia el estado al iniciar el flujo de reclutamiento
-        clear_history(state)  # Limpia el historial al iniciar el flujo de reclutamiento
+        state.state.clear()  
+        clear_history(state)  
 
     if "cancelar" in body.lower():
         return reset_recruitment_state(state, database, from_number)
@@ -72,7 +72,7 @@ async def flow_recruit(state, body, from_number, database):
 
 def reset_recruitment_state(state, database, from_number):
     state.state.clear()  # Limpia completamente el estado
-    state.update({'recruitment_phase': False, 'has_interacted': True})  # Reinicia las variables clave
+    state.update({'recruitment_phase': False, 'has_interacted': True, 'reset_conversation': True})  # Reinicia las variables clave
     clear_history(state)  # Limpia el historial
     delete_state(database, from_number)  # Elimina el estado de la base de datos
     return "Proceso de reclutamiento finalizado. ¿En qué más puedo ayudarte?"
