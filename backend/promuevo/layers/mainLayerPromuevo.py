@@ -45,6 +45,7 @@ async def register_message_and_process_promuevo(body: str, ai: AIClassPromuevo, 
 
 async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_number,id,database):
     print(f"Estado actual de recruitment_phase: {state.get('recruitment_phase')}")
+    print(state)
     if state.get("recruitment_phase") is True:
         response = await flow_recruit(state, body, from_number, database)
         return response

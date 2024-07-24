@@ -1,4 +1,4 @@
-from promuevo.utilsPromuvo.historyPromuevo import clear_history
+from promuevo.utilsPromuevo.historyPromuevo import clear_history
 from promuevo.services.spreadsheet import write_lead
 from functions.querys_db import delete_state
 
@@ -12,8 +12,7 @@ async def flow_recruit(state, body, from_number, database):
             state.update({'name_prompted': True})
             return "Ok, voy a pedirte unos datos. ¿Cuál es tu nombre? 😊📝"
         else:
-            state.update({'name': body})
-            state.update({'name_prompted': False})
+            state.update({'name': body, 'name_prompted': False})
             return "¿Cuál es tu edad? 📝"
         
     if not state.get('age'):
@@ -49,25 +48,28 @@ async def flow_recruit(state, body, from_number, database):
             'telefono': state.get('phone')
         }
         response = ( 
-            f"¡Gracias {state.get('name')}! Hemos recibido tus datos:"
-            f"Edad: {state.get('age')}"
-            f"Ciudad: {state.get('city')}"
-            f"Nivel de estudios: {state.get('education_level')}"
-            f"Puesto deseado: {state.get('desired_position')}"
-            f"Email: {state.get('email')}"
-            f"Teléfono: {state.get('phone')}"
+            f"¡Gracias {state.get('name')}! Hemos recibido tus datos:\n"
+            f"Edad: {state.get('age')}\n"
+            f"Ciudad: {state.get('city')}\n"
+            f"Nivel de estudios: {state.get('education_level')}\n"
+            f"Puesto deseado: {state.get('desired_position')}\n"
+            f"Email: {state.get('email')}\n"
+            f"Teléfono: {state.get('phone')}\n\n"
+            "¿En qué más puedo ayudarte?"
         )
         await write_lead(date_object)
         
-        reset_recruitment_state(state, database, from_number)
-        
-        return response
+        return reset_recruitment_state(state, database, from_number)
 
     return "Lo siento, ha ocurrido un error en el proceso de reclutamiento. ¿En qué más puedo ayudarte?"
     
 
 def reset_recruitment_state(state, database, from_number):
-    state.state.clear()
+    recruitment_keys = ['name', 'age', 'city', 'education_level', 'desired_position', 'email', 'phone', 'name_prompted']
+    for key in recruitment_keys:
+        if key in state.state:
+            del state.state[key]
+    
     state.update({'has_interacted': True, 'recruitment_phase': False})
     clear_history(state)
     delete_state(database, from_number)
