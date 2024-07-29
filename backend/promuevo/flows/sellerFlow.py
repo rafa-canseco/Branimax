@@ -1,9 +1,6 @@
-from promuevo.utilsPromuvo.historyPromuevo import handle_history
-from promuevo.utilsPromuvo.bot_state_promuevo import BotState
 from services.contextGlobal import get_context
+import json
 
-
-def sellerFlow(body:str,state:BotState,id):
-    chat_response = get_context(body,id,state)
-    handle_history({'role': 'seller', 'content':chat_response},state)
+def  sellerFlow(body, user_data, id):
+    chat_response = get_context(body, id, user_data)
     return chat_response

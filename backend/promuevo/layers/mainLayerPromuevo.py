@@ -1,77 +1,61 @@
-from promuevo.utilsPromuvo.bot_state_promuevo import BotState
-from promuevo.utilsPromuvo.historyPromuevo import (
-    handle_history,
-    get_history,
-    get_history_parse
-)
 from promuevo.services.aiService import AIClassPromuevo
-from functions.querys_db import get_state, update_state, get_discriminator_prompt
+from functions.querys_db import get_discriminator_prompt, update_user_data, get_user_data
 from promuevo.flows.sellerFlow import sellerFlow
 from promuevo.flows.serviceFlow import serviceIdentifier
 from promuevo.flows.recruitmentFlow import flow_recruit
+
 import json
 
-
-state = BotState()
-
-
 async def register_message_and_process_promuevo(body: str, ai: AIClassPromuevo, from_number: str, database: str, id):
-    state_dict, history, history_persistent = get_state(from_number, database)
+    user_data = get_user_data(database, from_number)
 
-    if isinstance(state_dict, str):
-        state_dict = json.loads(state_dict)
-    if isinstance(history_persistent, str):
-        history_persistent = json.loads(history_persistent)
-
-    state.update(state_dict)
-
-    if not state.get('has_interacted') or state.get('reset_conversation'):
+    if not user_data['has_interacted']:
         welcome_message = "Hola! 👋 Soy David, tu asistente virtual 🤖. ¿En qué puedo ayudarte hoy? 😊✨"
-        state.update({'has_interacted': True, 'reset_conversation': False})
-        update_state(from_number, state.state, get_history(state), history_persistent, database)
+        update_user_data(database, from_number, {'has_interacted': True})
         return welcome_message
+    
+    history = json.loads(user_data['history'])
+    history.append({"role": "user", "content": body})
 
-    handle_history({"role": "user", "content": body}, state)
+    response = await mainMessaging(user_data, ai, body, from_number, id, database)
 
-    response = await mainMessaging(state, ai, body, from_number, id, database)
-
-    history_persistent.append({"role": "user", "content": body})
-    history_persistent.append({"role": "assistant", "content": response})
-
-    update_state(from_number, state.state, get_history(state), history_persistent, database)
+    # Solo actualizamos el historial si no se ha reiniciado el estado
+    if not response.startswith("Proceso de reclutamiento finalizado"):
+        history.append({"role": "assistant", "content": response})
+        update_user_data(database, from_number, {'history': json.dumps(history)})
 
     return response
 
+async def mainMessaging(user_data, ai: AIClassPromuevo, body: str, user_id, id, database):
+    # Obtener los datos más recientes del usuario
+    user_data = get_user_data(database, user_id)
+    
+    print(f"Estado actual de recruitment_phase: {user_data['recruitment_phase']}")
+    if user_data['recruitment_phase']:
+        response = await flow_recruit(user_data, body, user_id, database)
+        return response  # Retornamos la respuesta inmediatamente si estamos en fase de reclutamiento
 
-async def mainMessaging(state: BotState, ai: AIClassPromuevo, body: str, from_number,id,database):
-    print(f"Estado actual de recruitment_phase: {state.get('recruitment_phase')}")
-    print(state)
-    if state.get("recruitment_phase") is True:
-        response = await flow_recruit(state, body, from_number, database)
-        return response
-
-    history = get_history_parse(state)
+    history = json.loads(user_data['history'])
     PROMPT_DISCRIMINATOR = get_discriminator_prompt(id)
-    prompt = PROMPT_DISCRIMINATOR.replace("{HISTORY}", history)
+    prompt = PROMPT_DISCRIMINATOR.replace("{HISTORY}", json.dumps(history))
 
     prediction = await ai.determine_chat_fn([{"role": "system", "content": prompt}])
 
     if "HABLAR" in prediction.get("prediction", ""):
-        response = sellerFlow(body, state,id)
-        return response
-    if "SERVICIOS" in prediction.get("prediction", ""):
-        response = await serviceIdentifier(state, ai)
-        return response
-    if "RESERVAR" in prediction.get("prediction", ""):
+        response = sellerFlow(body, user_data, id)
+    elif "SERVICIOS" in prediction.get("prediction", ""):
+        response = await serviceIdentifier(user_data, ai)
+    elif "RESERVAR" in prediction.get("prediction", ""):
         response = """Claro, con gusto te pongo en contacto con un asesor. Por favor, agenda una cita en el siguiente enlace de Calendly y estaremos encantados de atenderte:
 
                         https://calendly.com/promuevo/30min
 
                         ¡Esperamos hablar contigo pronto!"""
-        return response
-    if "TRABAJAR" in prediction.get("prediction", ""):
-        state.update({"recruitment_phase": True})
-        response = await flow_recruit(state, body, from_number, database)
-        return response
+    elif "TRABAJAR" in prediction.get("prediction", ""):
+        update_user_data(database, user_id, {'recruitment_phase': True})
+        user_data['recruitment_phase'] = True
+        response = await flow_recruit(user_data, body, user_id, database)
+    else:
+        response = "Lo siento, no entendí tu solicitud. ¿Podrías reformularla?"
 
-    return
+    return response

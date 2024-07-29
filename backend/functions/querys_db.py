@@ -266,3 +266,46 @@ def get_database_id(id):
     name_database = name.data[0]['name'].strip()  # Usamos strip() para eliminar espacios y saltos de línea
     print(f"Database name retrieved: {repr(name_database)}")  # Añadimos un print para depuración
     return name_database
+
+def get_user_data(database,user_id):
+    response = supabase.table(database).select('*').eq('from_number',user_id).execute()
+    if response.data:
+        return response.data[0]
+    else:
+        new_user = {
+            'from_number': user_id,
+            'has_interacted': False,
+            'recruitment_phase': False,
+            'name': None,
+            'age': None,
+            'city': None,
+            'education_level': None,
+            'desired_position': None,
+            'email': None,
+            'phone': None,
+            'name_prompted': False,
+            'history': '[]',
+            'history_persistent': '[]'
+        }
+        supabase.table(database).insert(new_user).execute()
+        return new_user
+    
+def update_user_data(database,user_id,data):
+    supabase.table(database).update(data).eq('from_number',user_id).execute()
+
+def reset_user_data(database,user_id):
+    reset_data = {
+        'has_interacted': True,
+        'recruitment_phase': False,
+        'name': None,
+        'age': None,
+        'city': None,
+        'education_level': None,
+        'desired_position': None,
+        'email': None,
+        'phone': None,
+        'name_prompted': False,
+        'history': '[]',
+        'history_persistent': '[]'
+    }
+    update_user_data(database, user_id, reset_data)
