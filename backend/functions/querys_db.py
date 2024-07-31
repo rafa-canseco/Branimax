@@ -309,3 +309,17 @@ def reset_user_data(database,user_id):
         'history_persistent': '[]'
     }
     update_user_data(database, user_id, reset_data)
+
+
+def get_user_data_vanquish(database,user_id):
+    response = supabase.table(database).select('*').eq('from_number',user_id).execute()
+    if response.data:
+        return response.data[0]
+    else:
+        new_user = {
+            'from_number': user_id,
+            'history': '[]',
+            'history_persistent': '[]'
+        }
+        supabase.table(database).insert(new_user).execute()
+        return new_user

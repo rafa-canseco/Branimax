@@ -1040,7 +1040,7 @@ async def post_texto_memory(data:dict):
         response = "registro borrado"
         return {"response": response}
     
-    response = await register_message_on_db(incoming_que,ai,bot_state,from_number,database,id)
+    response = await register_message_on_db(incoming_que,ai,from_number,database,id)
     return {"response": response}
 
 @app.post("/post-audio-memory")
@@ -1058,7 +1058,7 @@ async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),use
     if not message_decoded:
         raise HTTPException(status_code=400, detail="Falló al decodificar audio")
     
-    chat_response = await register_message_on_db(message_decoded,ai,bot_state,user_email,database,id)
+    chat_response = await register_message_on_db(message_decoded,ai,user_email,database,id)
 
     if not chat_response:
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
