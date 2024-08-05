@@ -611,10 +611,10 @@ async def message(request: Request):
     message.body(chat_response)
     return Response(content=str(bot_response), media_type="application/xml")
 
-@app.post("/whatsapp_alcazar")
+@app.post("/whatsapp")
 async def message(request: Request):
     form_data = await request.form()
-    id=17
+    id=20
     bot_resp = MessagingResponse()
     msg = bot_resp.message()
 

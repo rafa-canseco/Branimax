@@ -172,7 +172,7 @@ def generate_tweet_url(prompt, topic, hashtag,url):
 
 def generateEmbeddigs():
     try:
-        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'promuevo4.pdf')
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'universidad.pdf')
 
         loader = PyPDFLoader(pdf)
         documents = loader.load()
@@ -183,7 +183,7 @@ def generateEmbeddigs():
             docs,
             embeddings,
             client=supabase,
-            table_name="documents_promuevo",
+            table_name="documents_universidad",
             # query_name="match_documents",
             chunk_size=500,
         )
@@ -236,6 +236,15 @@ def retrieveContextPromuevo():
     )
     return vector_store
 
+def retrieveContextUniversidad():
+    vector_store = SupabaseVectorStore(
+        embedding=embeddings,
+        client=supabase,
+        table_name="documents_universidad",
+        query_name="match_documents_universidad"
+    )
+    return vector_store
+
 def get_chat_response_vectorized(message_input, id, template):
     print(id)
     if id == 17:
@@ -246,6 +255,8 @@ def get_chat_response_vectorized(message_input, id, template):
         context = retrieveContextRestaurants()
     elif id == 9:
         context = retrieveContextPromuevo()
+    elif id == 20:
+        context = retrieveContextUniversidad()
     else:
         context = retrieveContext()
     
