@@ -79,7 +79,7 @@ def convert_text_to_speech_multilingual(message,voice,stability,similarity,style
     #Define Data
     body = {
         "text": message,
-        "model_id": "eleven_multilingual_v2",
+        "model_id": "eleven_multilingual_v1",
         "languages": [
         {
         "language_id": "es",

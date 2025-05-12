@@ -17,6 +17,8 @@ from langchain_openai import ChatOpenAI
 from openai import OpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from supabase.client import Client, create_client
+from langchain.schema import Document
+import unicodedata
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -170,21 +172,40 @@ def generate_tweet_url(prompt, topic, hashtag,url):
     response = chain.invoke({"input": f"genera un tweet interesante sobre el siguiente tema {topic} asegurate de incluir los siguientes {hashtag} y {url},debe obligatoriamente ser menor a 120 caracteres, escribe el tweet sin incluir apóstrofes como si estuvieras haciendo una cita, solo regresa el texto simple.,no pongas estos signos en el tweet ("") o ('') debe ser solo el texto."})
     return response
 
+def clean_text(text):
+    if not text:
+        return ""
+    # Eliminar caracteres nulos
+    text = text.replace('\x00', '')
+    # Codificar y decodificar para eliminar caracteres no UTF-8
+    text = text.encode('utf-8', errors='ignore').decode('utf-8')
+    # Normalizar unicode
+    text = unicodedata.normalize('NFKD', text)
+    return text
+
 def generateEmbeddigs():
     try:
-        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'universidad.pdf')
+        pdf = os.path.join(os.path.dirname(__file__), '..', 'storage', 'agro.pdf')
 
         loader = PyPDFLoader(pdf)
         documents = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-        docs = text_splitter.split_documents(documents)
+        
+        # Limpiar el texto de cada documento
+        cleaned_documents = []
+        for doc in documents:
+            cleaned_text = clean_text(doc.page_content)
+            cleaned_doc = Document(page_content=cleaned_text, metadata=doc.metadata)
+            cleaned_documents.append(cleaned_doc)
+
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=0)
+        docs = text_splitter.split_documents(cleaned_documents)
 
         vector_store = SupabaseVectorStore.from_documents(
             docs,
             embeddings,
             client=supabase,
-            table_name="documents_universidad",
-            # query_name="match_documents",
+            table_name="documents_cartesiano",
+            query_name="match_documents_cartesiano",
             chunk_size=500,
         )
         print("Embeddings creados y guardados exitosamente")
@@ -267,3 +288,4 @@ def get_chat_response_vectorized(message_input, id, template):
     response = qa.invoke({"query": message_input})
     return response["result"]
 
+generateEmbeddigs()
