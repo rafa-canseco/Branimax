@@ -1049,21 +1049,25 @@ async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),use
     print("user_number",user_email)
     database = get_database_id(id)
 
+    # Procesar el archivo de audio
     with open(file.filename, "wb") as buffer:
         buffer.write(await file.read())
     audio_input = open(file.filename, "rb")
 
+    # Convertir audio a texto (transcripción del usuario)
     message_decoded = convert_audio_to_text(audio_input)
 
     if not message_decoded:
         raise HTTPException(status_code=400, detail="Falló al decodificar audio")
     
+    # Obtener respuesta del chat
     chat_response = await register_message_on_db(message_decoded,ai,user_email,database,id)
 
     if not chat_response:
         raise HTTPException(status_code=400, detail="Falló la respuesta del chat")
     print(chat_response)
 
+    # Generar audio de respuesta
     companyId = getCompanyId(id)
     voiceSource = getVoiceSource(companyId)
     if voiceSource == "openai":
@@ -1079,6 +1083,26 @@ async def post_audio_memory(file: UploadFile = File(...), id:str = Form(...),use
     if not audio_output:
         raise HTTPException(status_code=400, detail="Falló la salida de audio")
     
-    def iterfile():
-        yield audio_output
-    return StreamingResponse(iterfile(), media_type="application/octet-stream")
+    # Guardar el audio en un archivo temporal para poder enviarlo junto con las transcripciones
+    import tempfile
+    import base64
+    
+    # Crear un archivo temporal para el audio
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_audio:
+        temp_audio.write(audio_output)
+        temp_audio_path = temp_audio.name
+    
+    # Convertir el audio a base64 para enviarlo en JSON
+    with open(temp_audio_path, 'rb') as audio_file:
+        audio_base64 = base64.b64encode(audio_file.read()).decode('utf-8')
+    
+    # Limpiar el archivo temporal
+    os.unlink(temp_audio_path)
+    
+    # Devolver tanto las transcripciones como el audio
+    return JSONResponse(content={
+        "user_transcription": message_decoded,
+        "bot_response_text": chat_response,
+        "audio_base64": audio_base64,
+        "audio_type": "audio/wav"
+    })
